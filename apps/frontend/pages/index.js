@@ -1,0 +1,137 @@
+import Head from "next/head";
+import Layout from "../components/Layout/Layout";
+import { optionalAuthSSR } from "../services/auth";
+import { getAnnouncements, getSystems } from "../services/api";
+import styles from "../styles/Home.module.css";
+
+export async function getServerSideProps(context) {
+  const auth = await optionalAuthSSR(context);
+
+  let announcements = [];
+  let systems = [];
+
+  try {
+    const [annResult, sysResult] = await Promise.all([
+      getAnnouncements(auth.cookie || null, { limit: "5" }),
+      getSystems(auth.cookie || null, { limit: "10" }),
+    ]);
+
+    if (annResult.success) announcements = annResult.data.items || [];
+    if (sysResult.success) systems = sysResult.data.items || [];
+  } catch (e) {
+    // Render page with empty data on API failure
+  }
+
+  return {
+    props: {
+      user: auth.user,
+      announcements,
+      systems,
+    },
+  };
+}
+
+export default function HomePage({ user, announcements, systems }) {
+  const activeCount = systems.filter((s) => s.status === "active").length;
+  const maintenanceCount = systems.filter((s) => s.status === "maintenance").length;
+
+  return (
+    <>
+      <Head>
+        <title>Home - ITPortal</title>
+      </Head>
+
+      <Layout user={user}>
+        {/* Welcome Section */}
+        <section className={styles.welcome}>
+          <h1 className={styles.welcomeTitle}>
+            Portal de Tecnologia da Informacao
+          </h1>
+          <p className={styles.welcomeText}>
+            Central de acesso a sistemas, documentos, comunicados e metricas do setor de TI do Grupo Bravante.
+          </p>
+        </section>
+
+        {/* Quick Stats */}
+        <section className={styles.statsGrid}>
+          <div className={`card ${styles.statCard}`}>
+            <span className={styles.statValue}>{systems.length}</span>
+            <span className={styles.statLabel}>Sistemas Catalogados</span>
+          </div>
+          <div className={`card ${styles.statCard}`}>
+            <span className={`${styles.statValue} ${styles.statActive}`}>{activeCount}</span>
+            <span className={styles.statLabel}>Sistemas Ativos</span>
+          </div>
+          <div className={`card ${styles.statCard}`}>
+            <span className={`${styles.statValue} ${styles.statWarning}`}>{maintenanceCount}</span>
+            <span className={styles.statLabel}>Em Manutencao</span>
+          </div>
+          <div className={`card ${styles.statCard}`}>
+            <span className={styles.statValue}>{announcements.length}</span>
+            <span className={styles.statLabel}>Comunicados Recentes</span>
+          </div>
+        </section>
+
+        {/* Content Grid */}
+        <div className={styles.contentGrid}>
+          {/* Recent Announcements */}
+          <section className="card">
+            <div className="card-header">
+              <h2>Comunicados Recentes</h2>
+              <a href="/comunicados" className={styles.viewAll}>Ver todos</a>
+            </div>
+
+            {announcements.length === 0 ? (
+              <p className={styles.emptyState}>Nenhum comunicado publicado.</p>
+            ) : (
+              <ul className={styles.announcementList}>
+                {announcements.map((item) => (
+                  <li key={item.id} className={styles.announcementItem}>
+                    <div className={styles.announcementHeader}>
+                      <h3 className={styles.announcementTitle}>{item.title}</h3>
+                      {item.is_pinned && (
+                        <span className="badge badge-active">Fixado</span>
+                      )}
+                    </div>
+                    <p className={styles.announcementMeta}>
+                      {item.author_name} &middot;{" "}
+                      {new Date(item.created_at).toLocaleDateString("pt-BR")}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* Systems Overview */}
+          <section className="card">
+            <div className="card-header">
+              <h2>Sistemas Internos</h2>
+              <a href="/sistemas" className={styles.viewAll}>Ver todos</a>
+            </div>
+
+            {systems.length === 0 ? (
+              <p className={styles.emptyState}>Nenhum sistema cadastrado.</p>
+            ) : (
+              <ul className={styles.systemsList}>
+                {systems.slice(0, 6).map((sys) => (
+                  <li key={sys.id} className={styles.systemItem}>
+                    <div>
+                      <span className={styles.systemName}>{sys.name}</span>
+                      {sys.description && (
+                        <span className={styles.systemDesc}>{sys.description}</span>
+                      )}
+                    </div>
+                    <span className={`badge badge-${sys.status === "active" ? "active" : sys.status === "maintenance" ? "maintenance" : "offline"}`}>
+                      {sys.status}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+      </Layout>
+    </>
+  );
+}

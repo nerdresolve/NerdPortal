@@ -1,0 +1,183 @@
+.container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* --- Brand Panel (left) --- */
+.brandPanel {
+  flex: 0 0 45%;
+  background: var(--verde-bravante);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-16);
+  position: relative;
+  overflow: hidden;
+}
+
+.brandContent {
+  position: relative;
+  z-index: 2;
+}
+
+.brandLogo {
+  height: 48px;
+  width: auto;
+  filter: brightness(0) invert(1);
+  margin-bottom: var(--space-8);
+}
+
+.brandTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: var(--space-2);
+  letter-spacing: -0.02em;
+}
+
+.brandSubtitle {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 0;
+}
+
+/* Brand mesh triangles at 331.3 degrees */
+.meshContainer {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.meshTriangle1 {
+  position: absolute;
+  bottom: -40px;
+  right: -40px;
+  width: 0;
+  height: 0;
+  border-left: 180px solid transparent;
+  border-right: 180px solid transparent;
+  border-bottom: 280px solid var(--amarelo-bravante);
+  transform: rotate(331.3deg);
+  opacity: 0.9;
+}
+
+.meshTriangle2 {
+  position: absolute;
+  bottom: 60px;
+  right: 120px;
+  width: 0;
+  height: 0;
+  border-left: 100px solid transparent;
+  border-right: 100px solid transparent;
+  border-bottom: 160px solid rgba(255, 255, 255, 0.08);
+  transform: rotate(331.3deg);
+}
+
+.meshTriangle3 {
+  position: absolute;
+  top: 40px;
+  right: -60px;
+  width: 0;
+  height: 0;
+  border-left: 120px solid transparent;
+  border-right: 120px solid transparent;
+  border-bottom: 180px solid rgba(255, 255, 255, 0.05);
+  transform: rotate(331.3deg);
+}
+
+.meshTriangle4 {
+  position: absolute;
+  bottom: 120px;
+  right: 20px;
+  width: 0;
+  height: 0;
+  border-left: 50px solid transparent;
+  border-right: 50px solid transparent;
+  border-bottom: 75px solid var(--amarelo-45);
+  transform: rotate(331.3deg);
+  opacity: 0.6;
+}
+
+/* --- Form Panel (right) --- */
+.formPanel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  background: var(--off-white);
+}
+
+.formWrapper {
+  width: 100%;
+  max-width: 400px;
+}
+
+.formTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: var(--space-2);
+}
+
+.formDescription {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-8);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.error {
+  padding: var(--space-3) var(--space-4);
+  background: rgba(220, 38, 38, 0.06);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: var(--border-radius);
+  color: var(--color-error);
+  font-size: 0.875rem;
+  margin-bottom: var(--space-4);
+}
+
+.submitBtn {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font-size: 1rem;
+  margin-top: var(--space-2);
+  justify-content: center;
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .brandPanel {
+    flex: 0 0 auto;
+    padding: var(--space-8);
+    min-height: 200px;
+  }
+
+  .brandTitle {
+    font-size: 1.75rem;
+  }
+
+  .meshTriangle1 {
+    border-left-width: 100px;
+    border-right-width: 100px;
+    border-bottom-width: 160px;
+  }
+}

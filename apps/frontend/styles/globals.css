@@ -1,0 +1,379 @@
+/* ============================================================
+   ITPortal - Global Styles
+   Grupo Bravante Brand Identity Implementation
+   ============================================================ */
+
+/* --- Brand Tokens --- */
+:root {
+  /* Primary Colors */
+  --verde-bravante: #007B4E;
+  --amarelo-bravante: #EAAB00;
+
+  /* Secondary / Support Colors */
+  --verde-70: #629676;
+  --verde-80: #508074;
+  --verde-45: #93B29C;
+  --verde-60: #75A084;
+  --amarelo-80: #F2BA46;
+  --amarelo-65: #F7C66B;
+  --amarelo-45: #FCD798;
+  --cinza-bravante: #989AA5;
+
+  /* Neutrals */
+  --white: #FFFFFF;
+  --off-white: #F7F8FA;
+  --gray-100: #F0F1F3;
+  --gray-200: #E2E3E7;
+  --gray-300: #C5C7CE;
+  --gray-600: #5A5C66;
+  --gray-800: #2E2F35;
+  --black: #1A1B1F;
+
+  /* Semantic */
+  --color-primary: var(--verde-bravante);
+  --color-accent: var(--amarelo-bravante);
+  --color-bg: var(--white);
+  --color-bg-alt: var(--off-white);
+  --color-text: var(--gray-800);
+  --color-text-muted: var(--cinza-bravante);
+  --color-border: var(--gray-200);
+  --color-success: #16A34A;
+  --color-error: #DC2626;
+  --color-warning: var(--amarelo-bravante);
+
+  /* Typography - System fonts per brand manual (web/system) */
+  --font-primary: "Lucida Grande", "Lucida Sans", "Lucida Sans Unicode", sans-serif;
+  --font-mono: "SF Mono", "Cascadia Code", "Consolas", monospace;
+
+  /* Spacing Scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Layout */
+  --header-height: 64px;
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 64px;
+  --content-max-width: 1200px;
+  --border-radius: 6px;
+  --border-radius-lg: 10px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.10);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+}
+
+/* --- Reset & Base --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-primary);
+  color: var(--color-text);
+  background-color: var(--color-bg-alt);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* Brand manual: left-aligned text only */
+h1, h2, h3, h4, h5, h6, p, li, td, th, label, span, a {
+  text-align: left;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--verde-70);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* --- Typography Scale --- */
+h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.3;
+  margin-bottom: var(--space-4);
+}
+
+h2 {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  line-height: 1.35;
+  margin-bottom: var(--space-3);
+}
+
+h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  line-height: 1.4;
+  margin-bottom: var(--space-2);
+}
+
+p {
+  margin-bottom: var(--space-3);
+  color: var(--gray-600);
+}
+
+/* --- Layout Shell --- */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-main {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  padding-top: var(--header-height);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: margin-left var(--transition-base);
+}
+
+.app-content {
+  flex: 1;
+  padding: var(--space-8);
+  max-width: var(--content-max-width);
+  width: 100%;
+}
+
+/* --- Utility Classes --- */
+.card {
+  background: var(--white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--border-radius);
+  font-family: var(--font-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  line-height: 1.5;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--white);
+}
+
+.btn-primary:hover {
+  background: var(--verde-70);
+}
+
+.btn-accent {
+  background: var(--color-accent);
+  color: var(--gray-800);
+}
+
+.btn-accent:hover {
+  background: var(--amarelo-80);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.btn-outline:hover {
+  background: var(--color-primary);
+  color: var(--white);
+}
+
+/* --- Form Elements --- */
+.form-group {
+  margin-bottom: var(--space-4);
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: var(--space-1);
+}
+
+.form-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-family: var(--font-primary);
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  background: var(--white);
+  transition: border-color var(--transition-fast);
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0, 123, 78, 0.12);
+}
+
+.form-input::placeholder {
+  color: var(--gray-300);
+}
+
+/* --- Status Badges --- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.badge-active {
+  background: rgba(0, 123, 78, 0.1);
+  color: var(--color-primary);
+}
+
+.badge-maintenance {
+  background: rgba(234, 171, 0, 0.15);
+  color: #8B6914;
+}
+
+.badge-offline {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--color-error);
+}
+
+/* --- Data Table --- */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.data-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+.data-table tr:hover td {
+  background: var(--off-white);
+}
+
+/* --- Brand Mesh Graphic Element (331.3 degrees) --- */
+.mesh-accent {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 300px;
+  height: 300px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.06;
+  overflow: hidden;
+}
+
+.mesh-accent::before,
+.mesh-accent::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.mesh-accent::before {
+  bottom: -20px;
+  right: -20px;
+  border-left: 140px solid transparent;
+  border-right: 140px solid transparent;
+  border-bottom: 200px solid var(--verde-bravante);
+  transform: rotate(331.3deg);
+}
+
+.mesh-accent::after {
+  bottom: 40px;
+  right: 80px;
+  border-left: 80px solid transparent;
+  border-right: 80px solid transparent;
+  border-bottom: 120px solid var(--amarelo-bravante);
+  transform: rotate(331.3deg);
+}
+
+/* --- Responsive --- */
+@media (max-width: 1024px) {
+  .app-main {
+    margin-left: var(--sidebar-collapsed);
+  }
+}
+
+@media (max-width: 768px) {
+  .app-main {
+    margin-left: 0;
+  }
+
+  .app-content {
+    padding: var(--space-4);
+  }
+}
