@@ -4,6 +4,8 @@ import Head from "next/head";
 import { login, getMe } from "../services/api";
 import styles from "../styles/Login.module.css";
 
+const INTERNAL_API = process.env.INTERNAL_API_URL || "http://backend:4000/api/v1";
+
 export async function getServerSideProps(context) {
   const cookie = context.req.headers.cookie || "";
 
@@ -14,6 +16,17 @@ export async function getServerSideProps(context) {
     }
   } catch (e) {
     // Not authenticated, show login
+  }
+
+  // Prime CSRF cookie via internal network so the browser has it before submitting
+  try {
+    const res = await fetch(`${INTERNAL_API}/auth/me`);
+    const setCookie = res.headers.get("set-cookie");
+    if (setCookie) {
+      context.res.setHeader("Set-Cookie", setCookie);
+    }
+  } catch (e) {
+    // Non-fatal: login will handle missing CSRF gracefully
   }
 
   return { props: {} };
@@ -56,7 +69,7 @@ export default function LoginPage() {
         {/* Left panel with brand visual */}
         <div className={styles.brandPanel}>
           <div className={styles.brandContent}>
-            <img src="/logo.png" alt="Grupo Bravante" className={styles.brandLogo} />
+            <img src="/logo.webp" alt="Grupo Bravante" className={styles.brandLogo} />
             <h1 className={styles.brandTitle}>ITPortal</h1>
             <p className={styles.brandSubtitle}>
               Portal de Tecnologia da Informacao

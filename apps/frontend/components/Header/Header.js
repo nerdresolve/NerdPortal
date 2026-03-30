@@ -16,7 +16,7 @@ export default function Header({ user }) {
       <div className={styles.left}>
         <Link href="/">
           <img
-            src="/logo.png"
+            src="/logo.webp"
             alt="Grupo Bravante"
             className={styles.logo}
           />

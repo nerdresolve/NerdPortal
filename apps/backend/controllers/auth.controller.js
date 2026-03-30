@@ -1,4 +1,4 @@
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const usersDal = require("../dal/users.dal");
 const auditDal = require("../dal/audit.dal");
 
