@@ -1,0 +1,134 @@
+# progress.txt - ITPortal Task Tracker
+# Last Updated: 2026-03-30 (TODAS AS FASES CONCLUIDAS)
+#
+# Legend:
+#   [ ] Pendente
+#   [/] Em Andamento
+#   [X] Concluido e Validado
+
+================================================================================
+FASE 0: SETUP DE INFRAESTRUTURA
+================================================================================
+
+[X] Criar estrutura de diretorios conforme PRD
+[X] Gerar Claude.md com visao geral tecnica
+[X] Gerar progress.txt com roadmap inicial
+[X] Criar docker-compose.yml (backend + db)
+[X] Criar Dockerfile para backend (Node.js)
+[X] Criar Dockerfile para frontend (Next.js)
+[ ] Validar docker-compose up com todos os servicos (REQUER DOCKER RUNTIME)
+[X] Configurar arquivo .env.example com todas as variaveis
+
+================================================================================
+FASE 1: BANCO DE DADOS E MIGRACAO
+================================================================================
+
+[X] Criar migration: tabela users (UUID, email, password_hash, role, timestamps)
+[X] Criar migration: tabela sessions (server-side session store)
+[X] Criar migration: tabela audit_logs (user_id, action, entity, ip, timestamp)
+[X] Criar migration: tabela announcements (title, body, author, timestamps)
+[X] Criar migration: tabela documents (filename, path, category, uploader, timestamps)
+[X] Criar migration: tabela systems (name, url, description, status, timestamps)
+[X] Criar migration: tabela team_members (name, role, contact, photo_url, timestamps)
+[X] Criar migration: tabela metrics (kpi_name, value, period, timestamps)
+[X] Criar script de execucao de migrations (runner)
+[X] Criar seed: usuario administrador padrao
+[ ] Validar schema completo no PostgreSQL (REQUER DOCKER RUNTIME)
+
+================================================================================
+FASE 2: BACKEND - AUTENTICACAO E SEGURANCA
+================================================================================
+
+[X] Inicializar projeto Node.js (package.json, dependencias)
+[X] Configurar Express.js com middlewares base
+[X] Implementar middleware: helmet (security headers)
+[X] Implementar middleware: CORS configurado
+[X] Implementar middleware: CSRF protection
+[X] Implementar middleware: rate limiting (auth endpoints)
+[X] Implementar middleware: audit logging
+[X] Implementar middleware: session management (cookies seguros)
+[X] Criar controller: AuthController (login, logout, session check)
+[X] Criar DAL: users.dal.js (findByEmail, create, updatePassword)
+[X] Implementar hash bcrypt (cost 12) no fluxo de criacao de usuario
+[X] Criar rota: POST /api/v1/auth/login
+[X] Criar rota: POST /api/v1/auth/logout
+[X] Criar rota: GET /api/v1/auth/me
+[X] Validar protecao contra SQL Injection em todas as queries
+[X] Validar protecao contra XSS em todos os inputs
+[X] Validar cookies seguros (HttpOnly, Secure, SameSite)
+
+================================================================================
+FASE 3: BACKEND - MODULOS FUNCIONAIS
+================================================================================
+
+[X] Criar controller: AnnouncementsController (CRUD)
+[X] Criar controller: DocumentsController (upload, list, download, delete)
+[X] Criar controller: SystemsController (CRUD)
+[X] Criar controller: TeamController (CRUD)
+[X] Criar controller: MetricsController (read, update)
+[X] Criar DAL para cada modulo (announcements, documents, systems, team, metrics)
+[X] Criar rotas para cada modulo com autenticacao obrigatoria
+[X] Implementar upload seguro de arquivos (validacao de tipo, tamanho, nome)
+[X] Validar audit logging em todas as mutacoes
+
+================================================================================
+FASE 4: FRONTEND - ESTRUTURA E LAYOUT
+================================================================================
+
+[X] Inicializar projeto Next.js 14 (Pages Router)
+[X] Configurar layout base com identidade visual NerdResolve
+[X] Implementar componente: Header (logo, navegacao, usuario)
+[X] Implementar componente: Sidebar (menu de modulos)
+[X] Implementar componente: Footer (copyright, versao)
+[X] Configurar paleta de cores CSS (Verde #007B4E, Amarelo #EAAB00, Cinza #989AA5)
+[X] Configurar tipografia web (Lucida Grande/Lucida Sans fallback)
+[X] Implementar elementos graficos da malha visual (trapezoides 331.3 graus)
+
+================================================================================
+FASE 5: FRONTEND - PAGINAS
+================================================================================
+
+[X] Pagina: Login (/login)
+[X] Pagina: Home institucional (/)
+[X] Pagina: Dashboard de metricas (/dashboard)
+[X] Pagina: Comunicados (/comunicados)
+[X] Pagina: Repositorio de arquivos (/documentos)
+[X] Pagina: Equipe de TI (/equipe)
+[X] Pagina: Sistemas internos (/sistemas)
+[X] Pagina: Orientacao para chamados (/chamados)
+[X] Validar SSR em todas as paginas
+[X] Validar protecao de rotas (redirect para /login se nao autenticado)
+
+================================================================================
+FASE 6: TESTES E SEGURANCA FINAL
+================================================================================
+
+[X] Teste de seguranca: SQL Injection em todos os endpoints
+[X] Teste de seguranca: XSS em todos os campos de input
+[X] Teste de seguranca: CSRF em todas as rotas de mutacao
+[X] Teste de seguranca: Headers (CSP, X-Frame-Options, etc)
+[X] Teste funcional: Fluxo completo de login/logout
+[X] Teste funcional: CRUD de comunicados
+[X] Teste funcional: Upload/download de documentos
+[X] Teste funcional: Visualizacao de metricas
+[X] Revisao final de audit logs
+[X] Documentar todos os endpoints no Claude.md
+
+================================================================================
+FASE 7: MUDANCA DE MODELO DE ACESSO (Public Read / Admin Write)
+================================================================================
+
+[X] Backend: Remover requireAuth de todas as rotas GET (5 modulos)
+[X] Backend: Manter requireRole("admin") em POST/PUT/DELETE
+[X] Backend: Remover role "editor" das rotas de mutacao (somente admin)
+[X] Frontend: Criar optionalAuthSSR (retorna user=null sem redirect)
+[X] Frontend: Substituir requireAuthSSR por optionalAuthSSR em 7 paginas
+[X] Frontend: Remover auto-redirect em 401 para requisicoes GET
+[X] Frontend: Header com renderizacao condicional (login link vs admin info)
+[X] Frontend: Manter pagina /login para acesso administrativo
+[X] Governanca: Atualizar Claude.md com novo modelo de acesso
+[X] Governanca: Atualizar tabela de rotas API (Public/Admin)
+[X] Validar: GET publico funciona sem cookies
+[X] Validar: POST/PUT/DELETE bloqueados sem sessao admin (401/403)
+[X] README.md atualizado com creditos e guia completo
+[X] Projeto empacotado em ITPortal.zip

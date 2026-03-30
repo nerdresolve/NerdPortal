@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.env
+*.log
+uploads/*
+!uploads/.gitkeep
+pgdata/
+dist/
+.DS_Store
+.codex
