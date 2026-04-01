@@ -1,5 +1,5 @@
 # progress.txt - ITPortal Task Tracker
-# Last Updated: 2026-03-30 (TODAS AS FASES CONCLUIDAS)
+# Last Updated: 2026-04-01 (CORRECOES, AJUSTES VISUAIS E RECUPERACAO DE SENHA)
 #
 # Legend:
 #   [ ] Pendente
@@ -132,3 +132,41 @@ FASE 7: MUDANCA DE MODELO DE ACESSO (Public Read / Admin Write)
 [X] Validar: POST/PUT/DELETE bloqueados sem sessao admin (401/403)
 [X] README.md atualizado com creditos e guia completo
 [X] Projeto empacotado em ITPortal.zip
+
+================================================================================
+FASE 8: CORRECOES OPERACIONAIS 2026-04-01
+================================================================================
+
+[X] Corrigir path de uploads do backend para usar /app/uploads no container
+[X] Garantir criacao automatica do diretorio de uploads antes de gravar arquivos
+[X] Restringir login administrativo a usuarios com role admin
+[X] Corrigir frontend para exibir controles de admin apenas quando user.role = "admin"
+[X] Corrigir pagina Equipe para nao expor membros inativos a usuarios autenticados nao-admin
+[X] Exibir aviso de falha de carga publica em vez de mascarar erro como lista vazia
+[X] Atualizar README.md com comportamento revisado de acesso administrativo e armazenamento de uploads
+
+================================================================================
+FASE 9: AJUSTES VISUAIS E FOTO DA EQUIPE 2026-04-01
+================================================================================
+
+[X] Remover CTA publico de acesso administrativo do Header
+[X] Atualizar branding visivel do Header e Footer para "Portal do TI"
+[X] Corrigir textos basicos do frontend para portugues brasileiro com acentuacao
+[X] Implementar upload seguro de foto para membros da equipe (JPG/PNG/WEBP/GIF ate 2 MB)
+[X] Persistir caminho interno da foto no banco e servir imagem por rota publica controlada
+[X] Integrar formulario administrativo da Equipe com preview local e validacao de tipo/tamanho
+[X] Atualizar README.md com novo caminho de login e suporte a foto da equipe
+[X] Validar build do frontend (`npm run build`) apos os ajustes visuais
+
+================================================================================
+FASE 10: RECUPERACAO DE SENHA ADMINISTRATIVA 2026-04-01
+================================================================================
+
+[X] Criar migration para armazenar pedidos de recuperacao de senha com expiracao e tentativas
+[X] Implementar servico SMTP configuravel por variaveis de ambiente
+[X] Implementar solicitacao de codigo aleatorio por e-mail para conta admin
+[X] Implementar validacao do codigo e emissao de token temporario de redefinicao
+[X] Implementar redefinicao de senha com politica minima e invalidacao de sessoes ativas
+[X] Expor endpoints publicos de recuperacao em `/api/v1/auth/password-reset/*`
+[X] Criar pagina frontend `/recuperar-senha` com fluxo em etapas
+[X] Atualizar `.env.example` e `README.md` com variaveis SMTP necessarias

@@ -1,9 +1,85 @@
+const fs = require("fs");
+const path = require("path");
 const teamDal = require("../dal/team.dal");
+const { ensureUploadSubdir, resolveUploadPath, isPathWithinUploads } = require("../services/uploads");
+
+const TEAM_PHOTOS_DIR = ensureUploadSubdir("team");
+const MANAGED_PHOTO_PATTERN = /^\/api\/team\/photos\/([a-f0-9]{48}\.(?:jpg|png|webp|gif))$/;
+
+function sanitizeValue(value) {
+  if (typeof value !== "string") return value;
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;")
+    .replace(/\//g, "&#x2F;")
+    .trim();
+}
+
+function normalizeOptionalString(value) {
+  const sanitized = sanitizeValue(value);
+  return sanitized ? sanitized : null;
+}
+
+function normalizeBoolean(value) {
+  if (value === true || value === "true") return true;
+  if (value === false || value === "false") return false;
+  return undefined;
+}
+
+function normalizeSortOrder(value) {
+  const parsed = parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return undefined;
+  return Math.max(parsed, 0);
+}
+
+function buildManagedPhotoUrl(filename) {
+  return `/api/team/photos/${filename}`;
+}
+
+function extractManagedPhotoFilename(photoUrl) {
+  if (typeof photoUrl !== "string") return null;
+  const match = photoUrl.match(MANAGED_PHOTO_PATTERN);
+  return match ? match[1] : null;
+}
+
+function removeFileAtPath(filePath) {
+  if (!filePath || !isPathWithinUploads(filePath) || !fs.existsSync(filePath)) return;
+  fs.unlink(filePath, (err) => {
+    if (err) console.error("Team photo cleanup error:", err.message);
+  });
+}
+
+function removeManagedPhoto(photoUrl) {
+  const filename = extractManagedPhotoFilename(photoUrl);
+  if (!filename) return;
+
+  const absolutePath = resolveUploadPath("team", filename);
+  if (!absolutePath.startsWith(TEAM_PHOTOS_DIR + path.sep) && absolutePath !== TEAM_PHOTOS_DIR) return;
+  removeFileAtPath(absolutePath);
+}
+
+function getTeamPayload(body, file) {
+  return {
+    fullName: normalizeOptionalString(body.fullName),
+    jobTitle: normalizeOptionalString(body.jobTitle),
+    email: normalizeOptionalString(body.email),
+    phone: normalizeOptionalString(body.phone),
+    photoUrl: file ? buildManagedPhotoUrl(file.filename) : null,
+    photoUrlProvided: !!file,
+    department: normalizeOptionalString(body.department) || "TI",
+    description: normalizeOptionalString(body.description),
+    isActive: normalizeBoolean(body.isActive),
+    sortOrder: normalizeSortOrder(body.sortOrder),
+  };
+}
 
 async function list(req, res) {
   try {
-    const limit = Math.min(parseInt(req.query.limit) || 50, 100);
-    const offset = parseInt(req.query.offset) || 0;
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
+    const offset = parseInt(req.query.offset, 10) || 0;
     const activeOnly = req.query.active !== "false";
 
     const items = await teamDal.findAll({ activeOnly, limit, offset });
@@ -27,34 +103,71 @@ async function getById(req, res) {
   }
 }
 
-async function create(req, res) {
-  const { fullName, jobTitle, email, phone, photoUrl, department, sortOrder } = req.body;
+async function servePhoto(req, res) {
+  const filename = req.params.filename;
 
-  if (!fullName || !jobTitle || !email) {
-    return res.status(400).json({ success: false, error: "Full name, job title, and email are required" });
+  if (!/^[a-f0-9]{48}\.(jpg|png|webp|gif)$/.test(filename)) {
+    return res.status(404).json({ success: false, error: "Photo not found" });
+  }
+
+  const filePath = resolveUploadPath("team", filename);
+  if (!filePath.startsWith(TEAM_PHOTOS_DIR + path.sep) && filePath !== TEAM_PHOTOS_DIR) {
+    return res.status(403).json({ success: false, error: "Access denied" });
+  }
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ success: false, error: "Photo not found" });
+  }
+
+  res.setHeader("Cache-Control", "public, max-age=3600, immutable");
+  res.setHeader("Content-Disposition", "inline");
+  res.sendFile(filePath);
+}
+
+async function create(req, res) {
+  const payload = getTeamPayload(req.body, req.file);
+
+  if (!payload.fullName || !payload.jobTitle || !payload.email) {
+    removeFileAtPath(req.file?.path);
+    return res.status(400).json({
+      success: false,
+      error: "Full name, job title, and email are required",
+    });
   }
 
   try {
-    const item = await teamDal.create({ fullName, jobTitle, email, phone, photoUrl, department, sortOrder });
+    const item = await teamDal.create(payload);
     res.status(201).json({ success: true, data: item });
   } catch (err) {
+    removeFileAtPath(req.file?.path);
     console.error("Team create error:", err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
 
 async function update(req, res) {
-  const { fullName, jobTitle, email, phone, photoUrl, department, isActive, sortOrder } = req.body;
+  const payload = getTeamPayload(req.body, req.file);
 
   try {
-    const item = await teamDal.update(req.params.id, {
-      fullName, jobTitle, email, phone, photoUrl, department, isActive, sortOrder,
-    });
-    if (!item) {
+    const existing = await teamDal.findById(req.params.id);
+    if (!existing) {
+      removeFileAtPath(req.file?.path);
       return res.status(404).json({ success: false, error: "Team member not found" });
     }
+
+    const item = await teamDal.update(req.params.id, payload);
+    if (!item) {
+      removeFileAtPath(req.file?.path);
+      return res.status(404).json({ success: false, error: "Team member not found" });
+    }
+
+    if (req.file && existing.photo_url) {
+      removeManagedPhoto(existing.photo_url);
+    }
+
     res.status(200).json({ success: true, data: item });
   } catch (err) {
+    removeFileAtPath(req.file?.path);
     console.error("Team update error:", err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
@@ -62,10 +175,17 @@ async function update(req, res) {
 
 async function remove(req, res) {
   try {
+    const existing = await teamDal.findById(req.params.id);
+    if (!existing) {
+      return res.status(404).json({ success: false, error: "Team member not found" });
+    }
+
     const deleted = await teamDal.softDelete(req.params.id);
     if (!deleted) {
       return res.status(404).json({ success: false, error: "Team member not found" });
     }
+
+    removeManagedPhoto(existing.photo_url);
     res.status(200).json({ success: true, data: { message: "Team member deleted" } });
   } catch (err) {
     console.error("Team delete error:", err.message);
@@ -73,4 +193,4 @@ async function remove(req, res) {
   }
 }
 
-module.exports = { list, getById, create, update, remove };
+module.exports = { list, getById, servePhoto, create, update, remove };

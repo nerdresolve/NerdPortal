@@ -43,6 +43,7 @@ services:
       BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
     volumes:
       - ../apps/backend:/app
+      - ../database:/database:ro
       - /app/node_modules
       - ../uploads:/app/uploads
     depends_on:

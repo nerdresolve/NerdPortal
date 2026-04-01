@@ -1,10 +1,11 @@
 const path = require("path");
 const fs = require("fs");
-const crypto = require("crypto");
 const documentsDal = require("../dal/documents.dal");
+const { UPLOADS_DIR, ensureUploadsDir } = require("../services/uploads");
 
-const UPLOADS_DIR = path.resolve(__dirname, "../../uploads");
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+ensureUploadsDir();
 
 // Allowlist of safe MIME types
 const ALLOWED_MIME_TYPES = new Set([

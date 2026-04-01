@@ -6,7 +6,7 @@ export default function Document() {
       <Head>
         <link rel="icon" href="/favicon.webp" type="image/webp" />
         <meta name="theme-color" content="#007B4E" />
-        <meta name="description" content="ITPortal - NerdResolve - Portal de Tecnologia da Informacao" />
+        <meta name="description" content="Portal do TI - NerdResolve - Portal de Tecnologia da Informação" />
       </Head>
       <body>
         <Main />
