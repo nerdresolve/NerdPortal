@@ -15,6 +15,34 @@ const authLimiter = rateLimit({
   },
 });
 
+const passwordResetRequestLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: "Too many password reset requests. Try again in 15 minutes.",
+  },
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress;
+  },
+});
+
+const passwordResetVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: "Too many password reset verification attempts. Try again in 15 minutes.",
+  },
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress;
+  },
+});
+
 // General API limiter
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
@@ -27,4 +55,9 @@ const apiLimiter = rateLimit({
   },
 });
 
-module.exports = { authLimiter, apiLimiter };
+module.exports = {
+  authLimiter,
+  passwordResetRequestLimiter,
+  passwordResetVerifyLimiter,
+  apiLimiter,
+};

@@ -11,5 +11,6 @@ router.get("/:id", controller.getById);
 // Admin write
 router.post("/", requireRole("admin"), controller.create);
 router.put("/:id", requireRole("admin"), controller.update);
+router.delete("/:id", requireRole("admin"), controller.remove);
 
 module.exports = router;

@@ -1,4 +1,8 @@
 .header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
   margin-bottom: var(--space-6);
 }
 
@@ -48,6 +52,13 @@
   max-width: 800px;
 }
 
+.detailActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+}
+
 .backBtn {
   display: inline-flex;
   align-items: center;
@@ -60,7 +71,6 @@
   font-weight: 600;
   cursor: pointer;
   padding: 0;
-  margin-bottom: var(--space-6);
 }
 
 .backBtn:hover {

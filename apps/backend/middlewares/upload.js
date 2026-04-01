@@ -1,8 +1,9 @@
 const multer = require("multer");
 const crypto = require("crypto");
 const path = require("path");
+const { ensureUploadsDir } = require("../services/uploads");
 
-const UPLOADS_DIR = path.resolve(__dirname, "../../uploads");
+const UPLOADS_DIR = ensureUploadsDir();
 
 // Cryptographically random filename to prevent collisions and path attacks
 const storage = multer.diskStorage({
