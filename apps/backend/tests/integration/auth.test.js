@@ -14,6 +14,13 @@ jest.mock('../../dal/db', () => ({
 jest.mock('../../dal/users.dal');
 jest.mock('../../dal/audit.dal');
 jest.mock('../../dal/password-reset.dal');
+jest.mock('../../services/uploads', () => ({
+  UPLOADS_DIR: '/tmp/itportal-test-uploads',
+  ensureUploadsDir: jest.fn().mockReturnValue('/tmp/itportal-test-uploads'),
+  ensureUploadSubdir: jest.fn().mockReturnValue('/tmp/itportal-test-uploads/team'),
+  resolveUploadPath: jest.fn((...segments) => `/tmp/itportal-test-uploads/${segments.join('/')}`),
+  isPathWithinUploads: jest.fn().mockReturnValue(true),
+}));
 jest.mock('../../services/email', () => ({
   isEmailConfigured: jest.fn().mockReturnValue(false),
   sendEmail: jest.fn().mockResolvedValue(undefined),

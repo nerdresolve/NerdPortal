@@ -4,9 +4,9 @@
 # Validates all PRD-mandated security requirements via static analysis.
 # ==============================================================================
 
-BACKEND="/home/claude/itportal/apps/backend"
-FRONTEND="/home/claude/itportal/apps/frontend"
-DATABASE="/home/claude/itportal/database"
+BACKEND="/opt/bravante-web-itportal/apps/backend"
+FRONTEND="/opt/bravante-web-itportal/apps/frontend"
+DATABASE="/opt/bravante-web-itportal/database"
 PASS=0
 FAIL=0
 WARN=0
