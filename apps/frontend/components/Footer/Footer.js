@@ -6,9 +6,9 @@ export default function Footer() {
   return (
     <footer className={styles.footer}>
       <span className={styles.copyright}>
-        Grupo Bravante - Tecnologia da Informacao {year}
+        Grupo Bravante - Tecnologia da Informação {year}
       </span>
-      <span className={styles.version}>ITPortal v0.1.0</span>
+      <span className={styles.version}>Portal do TI v0.1.0</span>
     </footer>
   );
 }

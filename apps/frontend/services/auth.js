@@ -2,6 +2,10 @@
 
 const { getMe } = require("./api");
 
+function isAdminUser(user) {
+  return !!user && user.role === "admin";
+}
+
 // Attempts to resolve user from session cookie.
 // Returns { user, cookie } if authenticated, { user: null, cookie: "" } otherwise.
 // Never redirects -- pages are publicly accessible.
@@ -29,7 +33,7 @@ async function requireAuthSSR(context) {
   try {
     const result = await getMe(cookie);
 
-    if (!result.success || !result.data) {
+    if (!result.success || !result.data || !isAdminUser(result.data)) {
       return {
         redirect: {
           destination: "/login",
@@ -49,4 +53,4 @@ async function requireAuthSSR(context) {
   }
 }
 
-module.exports = { optionalAuthSSR, requireAuthSSR };
+module.exports = { optionalAuthSSR, requireAuthSSR, isAdminUser };
