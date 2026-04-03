@@ -70,7 +70,9 @@ function createTestApp({ injectSession = null } = {}) {
 // Returns a CSRF token by issuing a GET request and reading the set cookie.
 // Requires a supertest agent that persists cookies.
 async function getCsrfToken(agent) {
-  const res = await agent.get('/api/v1/health');
+  const res = await agent
+    .get('/api/v1/health')
+    .set('Origin', 'http://localhost:3000');
   const cookies = res.headers['set-cookie'] || [];
   const csrfCookie = cookies.find((c) => c.startsWith('csrf_token='));
   if (!csrfCookie) {

@@ -11,7 +11,7 @@ FASE 0: SETUP DE INFRAESTRUTURA
 ================================================================================
 
 [X] Criar estrutura de diretorios conforme PRD
-[X] Gerar Claude.md com visao geral tecnica
+[X] Gerar documentacao tecnica de referencia (technical-reference.md)
 [X] Gerar progress.txt com roadmap inicial
 [X] Criar docker-compose.yml (backend + db)
 [X] Criar Dockerfile para backend (Node.js)
@@ -112,7 +112,7 @@ FASE 6: TESTES E SEGURANCA FINAL
 [X] Teste funcional: Upload/download de documentos
 [X] Teste funcional: Visualizacao de metricas
 [X] Revisao final de audit logs
-[X] Documentar todos os endpoints no Claude.md
+[X] Documentar todos os endpoints em technical-reference.md
 
 ================================================================================
 FASE 7: MUDANCA DE MODELO DE ACESSO (Public Read / Admin Write)
@@ -126,7 +126,7 @@ FASE 7: MUDANCA DE MODELO DE ACESSO (Public Read / Admin Write)
 [X] Frontend: Remover auto-redirect em 401 para requisicoes GET
 [X] Frontend: Header com renderizacao condicional (login link vs admin info)
 [X] Frontend: Manter pagina /login para acesso administrativo
-[X] Governanca: Atualizar Claude.md com novo modelo de acesso
+[X] Governanca: Atualizar technical-reference.md com novo modelo de acesso
 [X] Governanca: Atualizar tabela de rotas API (Public/Admin)
 [X] Validar: GET publico funciona sem cookies
 [X] Validar: POST/PUT/DELETE bloqueados sem sessao admin (401/403)
