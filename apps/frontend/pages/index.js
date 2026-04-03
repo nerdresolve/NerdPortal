@@ -4,11 +4,19 @@ import { optionalAuthSSR } from "../services/auth";
 import { getAnnouncements, getSystems } from "../services/api";
 import styles from "../styles/Home.module.css";
 
+const STATUS_LABELS = {
+  active: "Ativo",
+  maintenance: "Manutenção",
+  deprecated: "Descontinuado",
+  offline: "Offline",
+};
+
 export async function getServerSideProps(context) {
   const auth = await optionalAuthSSR(context);
 
   let announcements = [];
   let systems = [];
+  let loadError = "";
 
   try {
     const [annResult, sysResult] = await Promise.all([
@@ -18,8 +26,16 @@ export async function getServerSideProps(context) {
 
     if (annResult.success) announcements = annResult.data.items || [];
     if (sysResult.success) systems = sysResult.data.items || [];
+
+    const failedSections = [];
+    if (!annResult.success) failedSections.push("comunicados");
+    if (!sysResult.success) failedSections.push("sistemas");
+
+    if (failedSections.length > 0) {
+      loadError = `Não foi possível carregar ${failedSections.join(" e ")} no momento.`;
+    }
   } catch (e) {
-    // Render page with empty data on API failure
+    loadError = "Não foi possível carregar os blocos públicos da página inicial no momento.";
   }
 
   return {
@@ -27,28 +43,33 @@ export async function getServerSideProps(context) {
       user: auth.user,
       announcements,
       systems,
+      loadError,
     },
   };
 }
 
-export default function HomePage({ user, announcements, systems }) {
+export default function HomePage({ user, announcements, systems, loadError }) {
   const activeCount = systems.filter((s) => s.status === "active").length;
   const maintenanceCount = systems.filter((s) => s.status === "maintenance").length;
 
   return (
     <>
       <Head>
-        <title>Home - ITPortal</title>
+        <title>Portal do TI | Início</title>
       </Head>
 
       <Layout user={user}>
+        {loadError && (
+          <div className="status-banner status-banner-error">{loadError}</div>
+        )}
+
         {/* Welcome Section */}
         <section className={styles.welcome}>
           <h1 className={styles.welcomeTitle}>
-            Portal de Tecnologia da Informacao
+            Portal do TI
           </h1>
           <p className={styles.welcomeText}>
-            Central de acesso a sistemas, documentos, comunicados e metricas do setor de TI do NerdResolve.
+            Central de acesso a sistemas, documentos, comunicados e métricas do setor de TI do NerdResolve.
           </p>
         </section>
 
@@ -64,7 +85,7 @@ export default function HomePage({ user, announcements, systems }) {
           </div>
           <div className={`card ${styles.statCard}`}>
             <span className={`${styles.statValue} ${styles.statWarning}`}>{maintenanceCount}</span>
-            <span className={styles.statLabel}>Em Manutencao</span>
+            <span className={styles.statLabel}>Em Manutenção</span>
           </div>
           <div className={`card ${styles.statCard}`}>
             <span className={styles.statValue}>{announcements.length}</span>
@@ -123,7 +144,7 @@ export default function HomePage({ user, announcements, systems }) {
                       )}
                     </div>
                     <span className={`badge badge-${sys.status === "active" ? "active" : sys.status === "maintenance" ? "maintenance" : "offline"}`}>
-                      {sys.status}
+                      {STATUS_LABELS[sys.status] || sys.status}
                     </span>
                   </li>
                 ))}

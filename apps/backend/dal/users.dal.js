@@ -1,18 +1,24 @@
 const db = require("./db");
 
-async function findByEmail(email) {
-  const result = await db.query(
+function getExecutor(client) {
+  return client || db;
+}
+
+async function findByEmail(email, client) {
+  const executor = getExecutor(client);
+  const result = await executor.query(
     `SELECT id, email, password_hash, full_name, role, is_active,
             last_login_at, created_at, updated_at
      FROM users
-     WHERE email = $1 AND deleted_at IS NULL`,
+     WHERE LOWER(email) = LOWER($1) AND deleted_at IS NULL`,
     [email]
   );
   return result.rows[0] || null;
 }
 
-async function findById(id) {
-  const result = await db.query(
+async function findById(id, client) {
+  const executor = getExecutor(client);
+  const result = await executor.query(
     `SELECT id, email, full_name, role, is_active,
             last_login_at, created_at, updated_at
      FROM users
@@ -32,16 +38,18 @@ async function create({ email, passwordHash, fullName, role }) {
   return result.rows[0];
 }
 
-async function updateLastLogin(id) {
-  await db.query(
+async function updateLastLogin(id, client) {
+  const executor = getExecutor(client);
+  await executor.query(
     "UPDATE users SET last_login_at = NOW() WHERE id = $1",
     [id]
   );
 }
 
-async function updatePassword(id, passwordHash) {
-  await db.query(
-    "UPDATE users SET password_hash = $1 WHERE id = $2",
+async function updatePassword(id, passwordHash, client) {
+  const executor = getExecutor(client);
+  await executor.query(
+    "UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2",
     [passwordHash, id]
   );
 }

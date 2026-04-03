@@ -71,4 +71,17 @@ async function update(req, res) {
   }
 }
 
-module.exports = { list, getById, create, update };
+async function remove(req, res) {
+  try {
+    const deleted = await metricsDal.remove(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, error: "Metric not found" });
+    }
+    res.status(200).json({ success: true, data: { message: "Metric deleted" } });
+  } catch (err) {
+    console.error("Metric delete error:", err.message);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+}
+
+module.exports = { list, getById, create, update, remove };

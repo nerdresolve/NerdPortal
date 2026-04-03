@@ -180,6 +180,21 @@ POSTGRES_PASSWORD=sua_senha_segura_aqui
 # OBRIGATORIO: Gere uma string aleatoria de no minimo 64 caracteres
 # Em Linux/macOS, gere com: openssl rand -hex 32
 SESSION_SECRET=cole_aqui_a_string_gerada
+
+# OBRIGATORIO PARA RECUPERACAO DE SENHA VIA E-MAIL
+SMTP_HOST=smtp.seuprovedor.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_REQUIRE_TLS=true
+SMTP_USER=conta-que-vai-enviar@empresa.com.br
+SMTP_PASSWORD=senha_da_conta_ou_app_password
+SMTP_FROM_EMAIL=conta-que-vai-enviar@empresa.com.br
+SMTP_FROM_NAME=Portal do TI
+
+# OPCIONAIS: Ajuste fino do fluxo de recuperacao
+PASSWORD_RESET_CODE_TTL_MINUTES=15
+PASSWORD_RESET_TOKEN_TTL_MINUTES=15
+PASSWORD_RESET_MAX_ATTEMPTS=5
 ```
 
 Para gerar o `SESSION_SECRET` automaticamente:
@@ -195,6 +210,27 @@ openssl rand -hex 32
 ```
 
 As demais variaveis possuem valores padrao adequados para desenvolvimento e nao precisam ser alteradas.
+
+### 4.1 Variaveis para recuperacao de senha
+
+Para que o administrador receba o codigo por e-mail, preencha no `.env`:
+
+| Variavel | Obrigatoria | Descricao |
+|----------|-------------|-----------|
+| `SMTP_HOST` | Sim | Host SMTP do provedor que enviara os e-mails |
+| `SMTP_PORT` | Sim | Porta SMTP. Ex.: `587` para STARTTLS ou `465` para SMTPS |
+| `SMTP_SECURE` | Sim | Use `true` quando o provedor exigir TLS implicito na conexao inicial |
+| `SMTP_REQUIRE_TLS` | Nao | Mantem `true` para exigir STARTTLS quando `SMTP_SECURE=false` |
+| `SMTP_USER` | Sim | Usuario/login da conta que enviara o codigo |
+| `SMTP_PASSWORD` | Sim | Senha da conta ou app password do provedor |
+| `SMTP_FROM_EMAIL` | Sim | Endereco que aparecera como remetente |
+| `SMTP_FROM_NAME` | Nao | Nome exibido no remetente. Sugestao: `Portal do TI` |
+| `SMTP_AUTH_METHOD` | Nao | Metodo SMTP. Padrao: `LOGIN` |
+| `SMTP_HELO_NAME` | Nao | Nome enviado no EHLO/HELO, se o provedor exigir personalizacao |
+| `SMTP_TIMEOUT_MS` | Nao | Timeout da conexao SMTP em milissegundos |
+| `PASSWORD_RESET_CODE_TTL_MINUTES` | Nao | Tempo de expiracao do codigo recebido por e-mail |
+| `PASSWORD_RESET_TOKEN_TTL_MINUTES` | Nao | Tempo de expiracao do token liberado apos validar o codigo |
+| `PASSWORD_RESET_MAX_ATTEMPTS` | Nao | Numero maximo de tentativas invalidas do codigo antes da invalidacao |
 
 ---
 
@@ -336,6 +372,7 @@ npm run dev
 ```
 
 O backend estara disponivel em `http://localhost:4000`.
+Na execucao manual, os uploads ficam em `apps/backend/uploads/` por padrao. Caso queira centralizar em outro caminho, defina a variavel `UPLOADS_DIR` antes de iniciar o backend.
 
 ### 6.6 Iniciar o frontend
 
@@ -363,6 +400,8 @@ As migracoes criam todas as tabelas necessarias no PostgreSQL. Este passo e obri
 docker compose exec backend node database/migrate.js
 ```
 
+Observacao: o `docker-compose.yml` monta `../database` em `/database` dentro do container do backend para que o runner de migracoes consiga acessar os arquivos SQL do projeto.
+
 ### 7.2 Via execucao manual
 
 ```
@@ -384,8 +423,10 @@ A saida esperada:
 [OK]   20260329180500_create_systems_table.sql
 [OK]   20260329180600_create_team_members_table.sql
 [OK]   20260329180700_create_metrics_table.sql
+[OK]   20260401000000_add_description_to_team_members.sql
+[OK]   20260401010000_create_password_reset_requests_table.sql
 
-Migrations complete. Applied: 8, Skipped: 0
+Migrations complete. Applied: 10, Skipped: 0
 ```
 
 As migracoes sao idempotentes. Executar novamente nao causa erros (migracoes ja aplicadas sao ignoradas).
@@ -399,20 +440,7 @@ O seed cria o usuario administrador padrao para o primeiro acesso.
 ### 8.1 Via Docker
 
 ```
-docker compose exec backend node ../../database/seeds/001_admin_user.js
-```
-
-Nota: dentro do container, o caminho relativo ao working directory `/app` e `../../database/seeds/001_admin_user.js`. Caso o caminho nao funcione, execute:
-
-```
-docker compose exec backend sh -c "cd /app && POSTGRES_HOST=db node /app/../../../database/seeds/001_admin_user.js"
-```
-
-Alternativamente, copie o seed para dentro do container:
-
-```
-docker cp database/seeds/001_admin_user.js itportal_backend:/tmp/seed.js
-docker compose exec backend node /tmp/seed.js
+docker compose exec backend node /database/seeds/001_admin_user.js
 ```
 
 ### 8.2 Via execucao manual
@@ -449,12 +477,22 @@ O ITPortal opera sob o modelo **Leitura Publica / Escrita Restrita**. Nenhuma au
 
 ### 9.2 Acesso administrativo (gestao de conteudo)
 
-1. Clique em "Acesso Admin" no canto superior direito do Header.
-2. Informe as credenciais do administrador (secao 8).
+1. Acesse diretamente `http://localhost:3000/login`.
+2. Informe as credenciais do administrador (secao 8). O login aceita apenas usuarios com `role = admin`.
 3. Apos o login, botoes de edicao, upload e exclusao serao exibidos nas paginas.
-4. Operacoes de criacao, edicao e exclusao exigem sessao administrativa valida.
+4. O Header publico nao exibe atalho administrativo; isso reduz exposicao visual da area de gestao para visitantes.
+5. Na pagina Equipe, o cadastro administrativo aceita foto do membro em JPG, PNG, WEBP ou GIF com limite de 2 MB.
+6. Operacoes de criacao, edicao e exclusao exigem sessao administrativa valida.
 
-### 9.3 Portas dos servicos
+### 9.3 Recuperacao de senha do administrador
+
+1. Acesse `http://localhost:3000/recuperar-senha`.
+2. Informe o e-mail administrativo e solicite o codigo.
+3. O backend enviara um codigo aleatorio por e-mail usando as variaveis SMTP configuradas no `.env`.
+4. Valide o codigo recebido e defina uma nova senha forte.
+5. A redefinicao encerra sessoes administrativas antigas para reduzir risco de sequestro de sessao.
+
+### 9.4 Portas dos servicos
 
 | Servico    | URL                               |
 |------------|-----------------------------------|
@@ -533,24 +571,26 @@ ITPortal/
         _app.js                 Provider global
         _document.js            HTML base (favicon, meta)
         login.js                Autenticacao
+        recuperar-senha.js      Recuperacao administrativa por codigo
         index.js                Home institucional
         dashboard.js            Metricas por categoria
         comunicados.js          Lista paginada de comunicados
         documentos.js           Repositorio com filtro e download
-        equipe.js               Diretorio de membros
+        equipe.js               Diretorio de membros com upload seguro de foto
         sistemas.js             Catalogo com filtros e badges
         chamados.js             Orientacao para tickets
       services/
         api.js                  Camada de fetch (client + SSR)
-        auth.js                 Guard SSR (requireAuthSSR)
+        auth.js                 Guard SSR e utilitarios de role
       styles/                   CSS Modules + variaveis globais
       public/                   Assets estaticos (logo, favicon)
       next.config.js
       Dockerfile
       package.json
+      uploads/                    Uploads locais da execucao manual do backend
 
   database/
-    migrations/                 8 arquivos SQL sequenciais
+    migrations/                 Arquivos SQL sequenciais de schema e evolucao
     seeds/                      Seed do usuario administrador
 
   docker/
@@ -562,7 +602,7 @@ ITPortal/
     security_audit_report.md    Relatorio de auditoria de seguranca
     security_audit.sh           Script de auditoria automatizada
 
-  uploads/                      Diretorio de arquivos enviados
+  uploads/                      Persistencia de uploads no host quando executado via Docker
   .env.example                  Template de variaveis de ambiente
   .gitignore
 ```
@@ -575,11 +615,14 @@ Base: `http://localhost:4000/api/v1`
 
 ### Autenticacao
 
-| Metodo | Rota          | Autenticacao | Descricao                     |
-|--------|---------------|--------------|-------------------------------|
-| POST   | /auth/login   | Nenhuma      | Autenticar usuario            |
-| POST   | /auth/logout  | Obrigatoria  | Encerrar sessao               |
-| GET    | /auth/me      | Nenhuma      | Dados da sessao atual         |
+| Metodo | Rota                         | Autenticacao | Descricao                                      |
+|--------|------------------------------|--------------|------------------------------------------------|
+| POST   | /auth/login                  | Nenhuma      | Autenticar usuario                             |
+| POST   | /auth/password-reset/request | Nenhuma      | Solicitar codigo de recuperacao por e-mail     |
+| POST   | /auth/password-reset/verify  | Nenhuma      | Validar codigo recebido e liberar troca de senha |
+| POST   | /auth/password-reset/confirm | Nenhuma      | Definir nova senha apos validacao do codigo    |
+| POST   | /auth/logout                 | Obrigatoria  | Encerrar sessao                                |
+| GET    | /auth/me                     | Nenhuma      | Dados da sessao atual                          |
 
 ### Comunicados
 
@@ -605,21 +648,22 @@ Base: `http://localhost:4000/api/v1`
 
 | Metodo | Rota           | Permissao   | Descricao              |
 |--------|----------------|-------------|------------------------|
-| GET    | /systems       | Autenticado | Listar (filtravel)     |
-| GET    | /systems/:id   | Autenticado | Detalhe                |
+| GET    | /systems       | Publica     | Listar (filtravel)     |
+| GET    | /systems/:id   | Publica     | Detalhe                |
 | POST   | /systems       | admin       | Criar                  |
 | PUT    | /systems/:id   | admin       | Atualizar              |
 | DELETE | /systems/:id   | admin       | Remover (soft delete)  |
 
 ### Equipe
 
-| Metodo | Rota        | Permissao   | Descricao              |
-|--------|-------------|-------------|------------------------|
-| GET    | /team       | Autenticado | Listar membros         |
-| GET    | /team/:id   | Autenticado | Detalhe                |
-| POST   | /team       | admin       | Criar                  |
-| PUT    | /team/:id   | admin       | Atualizar              |
-| DELETE | /team/:id   | admin       | Remover (soft delete)  |
+| Metodo | Rota                 | Permissao   | Descricao                            |
+|--------|----------------------|-------------|--------------------------------------|
+| GET    | /team                | Publica     | Listar membros                       |
+| GET    | /team/:id            | Publica     | Detalhe                              |
+| GET    | /team/photos/:filename | Publica   | Servir foto publica do membro        |
+| POST   | /team                | admin       | Criar (JSON ou multipart com foto)   |
+| PUT    | /team/:id            | admin       | Atualizar (JSON ou multipart com foto) |
+| DELETE | /team/:id            | admin       | Remover (soft delete)                |
 
 ### Metricas
 
@@ -652,10 +696,13 @@ O ITPortal adota um modelo onde todo o conteudo (comunicados, documentos, metric
 | DELETE   | Admin    | requireRole("admin") + CSRF           |
 
 O frontend renderiza controles de edicao (botoes de criar, editar, excluir, upload) condicionalmente: apenas quando o usuario esta autenticado como admin. Visitantes publicos veem apenas o conteudo de leitura.
+O acesso administrativo continua disponivel em `/login`, mas o Header publico nao exibe mais o botao de entrada da area admin.
 
 ### Medidas de Seguranca
 
 **Autenticacao:** Hash de senha com bcrypt (custo 12). Sessoes armazenadas no PostgreSQL com cookies HttpOnly, SameSite=Strict. Regeneracao de sessao no login para prevenir session fixation. Resposta em tempo constante para prevenir enumeracao de usuarios.
+O endpoint de login administrativo aceita apenas usuarios com `role = admin`; visitantes e usuarios sem privilegio administrativo devem consumir o portal exclusivamente em modo publico.
+O fluxo de recuperacao de senha gera um codigo aleatorio enviado por e-mail, armazena apenas o hash desse codigo no banco, limita tentativas de validacao, invalida pedidos anteriores e encerra sessoes existentes apos a redefinicao da senha.
 
 **Protecao contra SQL Injection:** Todas as queries usam parametrizacao (`$1, $2, ...`) via biblioteca `pg`. Nenhuma concatenacao de strings em SQL.
 
@@ -667,7 +714,7 @@ O frontend renderiza controles de edicao (botoes de criar, editar, excluir, uplo
 
 **Rate limiting:** 10 requisicoes por 15 minutos em endpoints de autenticacao. 100 requisicoes por minuto em endpoints gerais da API.
 
-**Upload de arquivos:** Allowlist de 13 tipos MIME seguros, limite de 10MB, nomes de arquivo criptograficamente aleatorios, prevencao de path traversal, sanitizacao de nomes originais.
+**Upload de arquivos e fotos:** Allowlist de tipos MIME seguros, nomes de arquivo criptograficamente aleatorios, prevencao de path traversal e validacao de tamanho. Documentos aceitam ate 10MB; fotos da equipe aceitam JPG, PNG, WEBP ou GIF ate 2MB e sao servidas por rota controlada.
 
 **Audit logging:** Todas as operacoes que alteram estado sao registradas com ID do usuario, acao, entidade, IP de origem e user-agent. Tabela de auditoria e imutavel.
 

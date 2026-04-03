@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import { login, getMe } from "../services/api";
@@ -50,10 +51,10 @@ export default function LoginPage() {
       if (result.success) {
         router.push("/");
       } else {
-        setError(result.error || "Falha na autenticacao");
+        setError(result.error || "Falha na autenticação.");
       }
     } catch (err) {
-      setError("Erro de conexao com o servidor");
+      setError("Erro de conexão com o servidor.");
     } finally {
       setLoading(false);
     }
@@ -62,7 +63,7 @@ export default function LoginPage() {
   return (
     <>
       <Head>
-        <title>Login - ITPortal</title>
+        <title>Portal do TI | Login</title>
       </Head>
 
       <div className={styles.container}>
@@ -70,9 +71,9 @@ export default function LoginPage() {
         <div className={styles.brandPanel}>
           <div className={styles.brandContent}>
             <img src="/logo.webp" alt="NerdResolve" className={styles.brandLogo} />
-            <h1 className={styles.brandTitle}>ITPortal</h1>
+            <h1 className={styles.brandTitle}>Portal do TI</h1>
             <p className={styles.brandSubtitle}>
-              Portal de Tecnologia da Informacao
+              Portal de Tecnologia da Informação
             </p>
           </div>
 
@@ -137,6 +138,10 @@ export default function LoginPage() {
               >
                 {loading ? "Autenticando..." : "Entrar"}
               </button>
+
+              <Link href="/recuperar-senha" className={styles.secondaryLink}>
+                Esqueci minha senha
+              </Link>
             </form>
           </div>
         </div>

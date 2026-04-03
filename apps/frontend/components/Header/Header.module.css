@@ -92,19 +92,3 @@
   padding: 2px var(--space-2);
   border-radius: 3px;
 }
-
-.loginLink {
-  padding: var(--space-2) var(--space-4);
-  background: var(--color-primary);
-  color: var(--white);
-  border-radius: var(--border-radius);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background var(--transition-fast);
-}
-
-.loginLink:hover {
-  background: var(--verde-70);
-  color: var(--white);
-}

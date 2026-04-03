@@ -76,4 +76,12 @@ async function getLatestByKpi(kpiName) {
   return result.rows[0] || null;
 }
 
-module.exports = { findAll, findById, create, update, getLatestByKpi };
+async function remove(id) {
+  const result = await db.query(
+    "DELETE FROM metrics WHERE id = $1 RETURNING id",
+    [id]
+  );
+  return result.rowCount > 0;
+}
+
+module.exports = { findAll, findById, create, update, getLatestByKpi, remove };

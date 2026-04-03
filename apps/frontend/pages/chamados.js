@@ -15,50 +15,50 @@ const STEPS = [
   {
     number: "01",
     title: "Identifique o Problema",
-    description: "Descreva o problema de forma clara, incluindo o sistema afetado, a mensagem de erro (se houver) e a frequencia de ocorrencia.",
+    description: "Descreva o problema de forma clara, incluindo o sistema afetado, a mensagem de erro (se houver) e a frequência de ocorrência.",
   },
   {
     number: "02",
     title: "Verifique o Status dos Sistemas",
-    description: "Antes de abrir um chamado, consulte a pagina de Sistemas Internos para verificar se ha alguma manutencao programada ou incidente em andamento.",
+    description: "Antes de abrir um chamado, consulte a página de Sistemas Internos para verificar se há alguma manutenção programada ou incidente em andamento.",
   },
   {
     number: "03",
     title: "Acesse o Portal de Chamados",
-    description: "Acesse o sistema de chamados da empresa para registrar sua solicitacao. O link esta disponivel na pagina de Sistemas Internos.",
+    description: "Acesse o sistema de chamados da empresa para registrar sua solicitação. O link está disponível na página de Sistemas Internos.",
   },
   {
     number: "04",
-    title: "Preencha o Formulario",
-    description: "Selecione a categoria apropriada (incidente, solicitacao, acesso, infraestrutura), preencha a descricao detalhada e anexe evidencias se necessario.",
+    title: "Preencha o Formulário",
+    description: "Selecione a categoria apropriada (incidente, solicitação, acesso, infraestrutura), preencha a descrição detalhada e anexe evidências se necessário.",
   },
   {
     number: "05",
     title: "Acompanhe o Chamado",
-    description: "Apos a abertura, acompanhe o andamento pelo sistema de chamados. Voce recebera notificacoes por e-mail sobre atualizacoes no status.",
+    description: "Após a abertura, acompanhe o andamento pelo sistema de chamados. Você receberá notificações por e-mail sobre atualizações no status.",
   },
 ];
 
 const CATEGORIES = [
   {
     name: "Incidente",
-    description: "Problema que afeta o funcionamento normal de um sistema ou servico. Exemplos: sistema fora do ar, erro ao acessar, lentidao critica.",
-    priority: "Resposta em ate 4 horas uteis",
+    description: "Problema que afeta o funcionamento normal de um sistema ou serviço. Exemplos: sistema fora do ar, erro ao acessar, lentidão crítica.",
+    priority: "Resposta em até 4 horas úteis",
   },
   {
-    name: "Solicitacao",
-    description: "Pedido de servico ou alteracao que nao envolve falha. Exemplos: criacao de conta, instalacao de software, configuracao de acesso.",
-    priority: "Resposta em ate 2 dias uteis",
+    name: "Solicitação",
+    description: "Pedido de serviço ou alteração que não envolve falha. Exemplos: criação de conta, instalação de software, configuração de acesso.",
+    priority: "Resposta em até 2 dias úteis",
   },
   {
     name: "Acesso",
-    description: "Solicitacao de concessao, alteracao ou revogacao de permissoes em sistemas internos.",
-    priority: "Resposta em ate 1 dia util",
+    description: "Solicitação de concessão, alteração ou revogação de permissões em sistemas internos.",
+    priority: "Resposta em até 1 dia útil",
   },
   {
     name: "Infraestrutura",
-    description: "Problemas ou solicitacoes relacionados a equipamentos, rede, cabeamento, impressoras ou telefonia.",
-    priority: "Resposta em ate 2 dias uteis",
+    description: "Problemas ou solicitações relacionados a equipamentos, rede, cabeamento, impressoras ou telefonia.",
+    priority: "Resposta em até 2 dias úteis",
   },
 ];
 
@@ -66,14 +66,14 @@ export default function ChamadosPage({ user }) {
   return (
     <>
       <Head>
-        <title>Chamados - ITPortal</title>
+        <title>Portal do TI | Chamados</title>
       </Head>
 
       <Layout user={user}>
         <section className={styles.header}>
           <h1 className={styles.title}>Abertura de Chamados</h1>
           <p className={styles.subtitle}>
-            Orientacoes para registro e acompanhamento de solicitacoes ao setor de TI.
+            Orientações para registro e acompanhamento de solicitações ao setor de TI.
           </p>
         </section>
 
@@ -111,7 +111,7 @@ export default function ChamadosPage({ user }) {
         <section className={`card ${styles.contactSection}`}>
           <h2 className={styles.sectionTitle}>Contato Direto</h2>
           <p className={styles.contactText}>
-            Para emergencias ou indisponibilidade do sistema de chamados, entre em contato diretamente com a equipe de TI:
+            Para emergências ou indisponibilidade do sistema de chamados, entre em contato diretamente com a equipe de TI:
           </p>
           <div className={styles.contactGrid}>
             <div className={styles.contactItem}>
@@ -125,7 +125,7 @@ export default function ChamadosPage({ user }) {
               <span className={styles.contactValue}>4000</span>
             </div>
             <div className={styles.contactItem}>
-              <span className={styles.contactLabel}>Horario</span>
+              <span className={styles.contactLabel}>Horário</span>
               <span className={styles.contactValue}>Seg-Sex, 08:00 - 18:00</span>
             </div>
           </div>
