@@ -4,9 +4,9 @@
 # Validates all PRD-mandated security requirements via static analysis.
 # ==============================================================================
 
-BACKEND="/home/claude/itportal/apps/backend"
-FRONTEND="/home/claude/itportal/apps/frontend"
-DATABASE="/home/claude/itportal/database"
+BACKEND="/opt/nerdportal/apps/backend"
+FRONTEND="/opt/nerdportal/apps/frontend"
+DATABASE="/opt/nerdportal/database"
 PASS=0
 FAIL=0
 WARN=0
