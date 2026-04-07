@@ -1,22 +1,32 @@
 -- Migration: 20260329180300_create_announcements_table.sql
 -- Internal IT communications and announcements.
 
-CREATE TABLE announcements (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+CREATE TABLE IF NOT EXISTS announcements (
+    id TEXT PRIMARY KEY DEFAULT (
+        lower(hex(randomblob(4))) || '-' ||
+        lower(hex(randomblob(2))) || '-4' ||
+        substr(lower(hex(randomblob(2))),2) || '-' ||
+        substr('89ab', abs(random()) % 4 + 1, 1) ||
+        substr(lower(hex(randomblob(2))),2) || '-' ||
+        lower(hex(randomblob(6)))
+    ),
     title TEXT NOT NULL,
     body TEXT NOT NULL,
-    author_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    is_pinned BOOLEAN NOT NULL DEFAULT false,
-    published_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ
+    author_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    is_pinned INTEGER NOT NULL DEFAULT 0,
+    published_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted_at TEXT
 );
 
-CREATE INDEX idx_announcements_published ON announcements (published_at DESC) WHERE deleted_at IS NULL;
-CREATE INDEX idx_announcements_author ON announcements (author_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_announcements_published ON announcements (published_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_announcements_author ON announcements (author_id) WHERE deleted_at IS NULL;
 
-CREATE TRIGGER trg_announcements_updated_at
-    BEFORE UPDATE ON announcements
+CREATE TRIGGER IF NOT EXISTS trg_announcements_updated_at
+    AFTER UPDATE ON announcements
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+    WHEN NEW.updated_at = OLD.updated_at
+    BEGIN
+        UPDATE announcements SET updated_at = datetime('now') WHERE id = NEW.id;
+    END;

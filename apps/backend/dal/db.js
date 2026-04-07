@@ -1,37 +1,84 @@
-const { Pool } = require("pg");
+const Database = require("better-sqlite3");
+const path = require("path");
+const { v4: uuidv4 } = require("uuid");
 
-const pool = new Pool({
-  host: process.env.POSTGRES_HOST || "localhost",
-  port: parseInt(process.env.POSTGRES_PORT || "5432", 10),
-  database: process.env.POSTGRES_DB || "itportal",
-  user: process.env.POSTGRES_USER || "itportal_user",
-  password: process.env.POSTGRES_PASSWORD,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-});
+const DB_PATH =
+  process.env.SQLITE_DB_PATH ||
+  path.resolve(__dirname, "../../../database/itportal.db");
 
-pool.on("error", (err) => {
-  console.error("Unexpected database pool error:", err.message);
-});
+let _db;
 
-async function query(text, params) {
-  const start = Date.now();
-  const result = await pool.query(text, params);
-  const duration = Date.now() - start;
-  if (process.env.NODE_ENV === "development") {
-    console.log("DB query (%dms): %s", duration, text.substring(0, 80));
+function getDb() {
+  if (!_db) {
+    _db = new Database(DB_PATH);
+    _db.pragma("journal_mode = WAL");
+    _db.pragma("foreign_keys = ON");
+    _db.function("gen_random_uuid", () => uuidv4());
   }
-  return result;
+  return _db;
+}
+
+// Convert PostgreSQL $1, $2, ... placeholders to SQLite ?
+function convertPlaceholders(sql) {
+  return sql.replace(/\$\d+/g, "?");
+}
+
+function isReadQuery(sql) {
+  return /^\s*SELECT\b/i.test(sql) || /\bRETURNING\b/i.test(sql);
+}
+
+function executeQuery(db, rawSql, params) {
+  const sql = convertPlaceholders(rawSql);
+  const stmt = db.prepare(sql);
+  if (isReadQuery(sql)) {
+    const rows = stmt.all(params);
+    return { rows, rowCount: rows.length };
+  }
+  const info = stmt.run(params);
+  return { rows: [], rowCount: info.changes };
+}
+
+async function query(text, params = []) {
+  return executeQuery(getDb(), text, params);
 }
 
 async function getClient() {
-  return pool.connect();
+  const db = getDb();
+  let inTransaction = false;
+
+  return {
+    async query(text, params = []) {
+      if (/^\s*BEGIN\b/i.test(text)) {
+        db.prepare("BEGIN").run();
+        inTransaction = true;
+        return { rows: [], rowCount: 0 };
+      }
+      if (/^\s*COMMIT\b/i.test(text)) {
+        db.prepare("COMMIT").run();
+        inTransaction = false;
+        return { rows: [], rowCount: 0 };
+      }
+      if (/^\s*ROLLBACK\b/i.test(text)) {
+        db.prepare("ROLLBACK").run();
+        inTransaction = false;
+        return { rows: [], rowCount: 0 };
+      }
+      return executeQuery(db, text, params);
+    },
+    release() {
+      if (inTransaction) {
+        try {
+          db.prepare("ROLLBACK").run();
+        } catch (_) {}
+        inTransaction = false;
+      }
+    },
+  };
 }
 
 async function healthCheck() {
-  const result = await pool.query("SELECT NOW()");
-  return result.rows[0];
+  const db = getDb();
+  return db.prepare("SELECT datetime('now') AS now").get();
 }
 
-module.exports = { pool, query, getClient, healthCheck };
+module.exports = { query, getClient, healthCheck, getDb };

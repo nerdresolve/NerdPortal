@@ -17,6 +17,13 @@ jest.mock('../../dal/documents.dal');
 jest.mock('../../dal/team.dal');
 jest.mock('../../dal/metrics.dal');
 jest.mock('../../dal/users.dal');
+jest.mock('../../services/uploads', () => ({
+  UPLOADS_DIR: '/tmp/itportal-test-uploads',
+  ensureUploadsDir: jest.fn().mockReturnValue('/tmp/itportal-test-uploads'),
+  ensureUploadSubdir: jest.fn().mockReturnValue('/tmp/itportal-test-uploads/team'),
+  resolveUploadPath: jest.fn((...segments) => `/tmp/itportal-test-uploads/${segments.join('/')}`),
+  isPathWithinUploads: jest.fn().mockReturnValue(true),
+}));
 
 const supertest = require('supertest');
 const auditDal = require('../../dal/audit.dal');
