@@ -64,7 +64,7 @@ async function update(id, {
          description = $9,
          is_active = COALESCE($10, is_active),
          sort_order = COALESCE($11, sort_order),
-         updated_at = NOW()
+         updated_at = datetime('now')
      WHERE id = $1 AND deleted_at IS NULL
      RETURNING id, full_name, job_title, email, phone, photo_url, department, description, is_active, sort_order, created_at, updated_at`,
     [id, fullName, jobTitle, email, phone, !!photoUrlProvided, photoUrl || null, department, description || null, isActive, sortOrder]
@@ -74,7 +74,7 @@ async function update(id, {
 
 async function softDelete(id) {
   const result = await db.query(
-    `UPDATE team_members SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
+    `UPDATE team_members SET deleted_at = datetime('now') WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
     [id]
   );
   return result.rowCount > 0;

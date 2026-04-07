@@ -41,7 +41,7 @@ async function create({ email, passwordHash, fullName, role }) {
 async function updateLastLogin(id, client) {
   const executor = getExecutor(client);
   await executor.query(
-    "UPDATE users SET last_login_at = NOW() WHERE id = $1",
+    "UPDATE users SET last_login_at = datetime('now') WHERE id = $1",
     [id]
   );
 }
@@ -49,7 +49,7 @@ async function updateLastLogin(id, client) {
 async function updatePassword(id, passwordHash, client) {
   const executor = getExecutor(client);
   await executor.query(
-    "UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2",
+    "UPDATE users SET password_hash = $1, updated_at = datetime('now') WHERE id = $2",
     [passwordHash, id]
   );
 }

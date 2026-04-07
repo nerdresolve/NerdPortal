@@ -68,7 +68,7 @@ async function update(id, { name, url, description, status, category, ownerId })
 
 async function softDelete(id) {
   const result = await db.query(
-    `UPDATE systems SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
+    `UPDATE systems SET deleted_at = datetime('now') WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
     [id]
   );
   return result.rowCount > 0;

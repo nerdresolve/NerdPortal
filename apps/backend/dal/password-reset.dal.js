@@ -4,7 +4,7 @@ async function invalidateActiveByUserId(userId, client) {
   const executor = client || db;
   await executor.query(
     `UPDATE password_reset_requests
-     SET invalidated_at = NOW()
+     SET invalidated_at = datetime('now')
      WHERE user_id = $1
        AND used_at IS NULL
        AND invalidated_at IS NULL`,
@@ -49,7 +49,7 @@ async function incrementAttempts(id, client) {
   const result = await executor.query(
     `UPDATE password_reset_requests
      SET attempt_count = attempt_count + 1,
-         last_attempt_at = NOW()
+         last_attempt_at = datetime('now')
      WHERE id = $1
      RETURNING id, attempt_count, last_attempt_at`,
     [id]
@@ -61,7 +61,7 @@ async function markVerified(id, resetTokenHash, client) {
   const executor = client || db;
   const result = await executor.query(
     `UPDATE password_reset_requests
-     SET verified_at = NOW(),
+     SET verified_at = datetime('now'),
          reset_token_hash = $2
      WHERE id = $1
      RETURNING id, user_id, request_email, expires_at, verified_at`,
@@ -74,7 +74,7 @@ async function invalidateById(id, client) {
   const executor = client || db;
   await executor.query(
     `UPDATE password_reset_requests
-     SET invalidated_at = NOW()
+     SET invalidated_at = datetime('now')
      WHERE id = $1`,
     [id]
   );
@@ -104,7 +104,7 @@ async function markUsed(id, client) {
   const executor = client || db;
   await executor.query(
     `UPDATE password_reset_requests
-     SET used_at = NOW()
+     SET used_at = datetime('now')
      WHERE id = $1`,
     [id]
   );

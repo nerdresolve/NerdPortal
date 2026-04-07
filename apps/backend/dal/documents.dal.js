@@ -48,7 +48,7 @@ async function create({ originalName, storedName, mimeType, sizeBytes, category,
 
 async function softDelete(id) {
   const result = await db.query(
-    `UPDATE documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id, stored_name`,
+    `UPDATE documents SET deleted_at = datetime('now') WHERE id = $1 AND deleted_at IS NULL RETURNING id, stored_name`,
     [id]
   );
   return result.rows[0] || null;
@@ -62,7 +62,7 @@ async function count(category) {
     where += ` AND category = $${params.length}`;
   }
   const result = await db.query(
-    `SELECT COUNT(*)::int AS total FROM documents WHERE ${where}`,
+    `SELECT COUNT(*) AS total FROM documents WHERE ${where}`,
     params
   );
   return result.rows[0].total;

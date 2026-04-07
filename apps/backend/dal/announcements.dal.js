@@ -54,7 +54,7 @@ async function update(id, { title, body, isPinned, publishedAt }) {
 
 async function softDelete(id) {
   const result = await db.query(
-    `UPDATE announcements SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
+    `UPDATE announcements SET deleted_at = datetime('now') WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
     [id]
   );
   return result.rowCount > 0;
@@ -62,7 +62,7 @@ async function softDelete(id) {
 
 async function count() {
   const result = await db.query(
-    "SELECT COUNT(*)::int AS total FROM announcements WHERE deleted_at IS NULL"
+    "SELECT COUNT(*) AS total FROM announcements WHERE deleted_at IS NULL"
   );
   return result.rows[0].total;
 }
