@@ -1,81 +1,66 @@
 const fs = require("fs");
 const path = require("path");
-const { Pool } = require("pg");
+const Database = require("better-sqlite3");
 
-const pool = new Pool({
-  host: process.env.POSTGRES_HOST || "localhost",
-  port: parseInt(process.env.POSTGRES_PORT || "5432", 10),
-  database: process.env.POSTGRES_DB || "itportal",
-  user: process.env.POSTGRES_USER || "itportal_user",
-  password: process.env.POSTGRES_PASSWORD,
-});
-
+const DB_PATH = process.env.SQLITE_DB_PATH || path.join(__dirname, "../../../itportal.db");
 const MIGRATIONS_DIR = path.resolve(__dirname, "../../../database/migrations");
 
-async function ensureMigrationsTable(client) {
-  await client.query(`
+const db = new Database(DB_PATH);
+db.pragma("journal_mode = WAL");
+db.pragma("foreign_keys = ON");
+
+function ensureMigrationsTable() {
+  db.prepare(`
     CREATE TABLE IF NOT EXISTS _migrations (
-      id SERIAL PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       filename TEXT NOT NULL UNIQUE,
-      executed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      executed_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
-  `);
+  `).run();
 }
 
-async function getExecutedMigrations(client) {
-  const result = await client.query(
-    "SELECT filename FROM _migrations ORDER BY filename"
+function getExecutedMigrations() {
+  return new Set(
+    db.prepare("SELECT filename FROM _migrations ORDER BY filename").all().map((r) => r.filename)
   );
-  return new Set(result.rows.map((row) => row.filename));
 }
 
-async function run() {
-  const client = await pool.connect();
+function run() {
+  ensureMigrationsTable();
+  const executed = getExecutedMigrations();
 
-  try {
-    await ensureMigrationsTable(client);
-    const executed = await getExecutedMigrations(client);
+  const files = fs
+    .readdirSync(MIGRATIONS_DIR)
+    .filter((f) => f.endsWith(".sql"))
+    .sort();
 
-    const files = fs
-      .readdirSync(MIGRATIONS_DIR)
-      .filter((f) => f.endsWith(".sql"))
-      .sort();
+  let applied = 0;
 
-    let applied = 0;
-
-    for (const file of files) {
-      if (executed.has(file)) {
-        console.log("[SKIP] %s (already applied)", file);
-        continue;
-      }
-
-      const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), "utf-8");
-
-      await client.query("BEGIN");
-      try {
-        await client.query(sql);
-        await client.query(
-          "INSERT INTO _migrations (filename) VALUES ($1)",
-          [file]
-        );
-        await client.query("COMMIT");
-        console.log("[OK]   %s", file);
-        applied++;
-      } catch (err) {
-        await client.query("ROLLBACK");
-        console.error("[FAIL] %s: %s", file, err.message);
-        process.exit(1);
-      }
+  for (const file of files) {
+    if (executed.has(file)) {
+      console.log("[SKIP] %s (already applied)", file);
+      continue;
     }
 
-    console.log("\nMigrations complete. Applied: %d, Skipped: %d", applied, files.length - applied);
-  } finally {
-    client.release();
-    await pool.end();
+    const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), "utf-8");
+
+    const txn = db.transaction(() => {
+      db.exec(sql);
+      db.prepare("INSERT INTO _migrations (filename) VALUES (?)").run(file);
+    });
+
+    try {
+      txn();
+      console.log("[OK]   %s", file);
+      applied++;
+    } catch (err) {
+      console.error("[FAIL] %s: %s", file, err.message);
+      process.exit(1);
+    }
   }
+
+  console.log("\nMigrations complete. Applied: %d, Skipped: %d", applied, files.length - applied);
+  db.close();
 }
 
-run().catch((err) => {
-  console.error("Migration runner failed:", err.message);
-  process.exit(1);
-});
+run();
