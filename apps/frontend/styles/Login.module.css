@@ -1,9 +1,8 @@
-.container {
+﻿.container {
   display: flex;
   min-height: 100vh;
 }
 
-/* --- Brand Panel (left) --- */
 .brandPanel {
   flex: 0 0 45%;
   background: var(--color-primary);
@@ -42,7 +41,6 @@
   margin-bottom: 0;
 }
 
-/* Brand mesh triangles at 331.3 degrees */
 .meshContainer {
   position: absolute;
   bottom: 0;
@@ -103,7 +101,6 @@
   opacity: 0.6;
 }
 
-/* --- Form Panel (right) --- */
 .formPanel {
   flex: 1;
   display: flex;
@@ -172,7 +169,6 @@
   text-decoration: underline;
 }
 
-/* --- Responsive --- */
 @media (max-width: 768px) {
   .container {
     flex-direction: column;
@@ -194,3 +190,4 @@
     border-bottom-width: 160px;
   }
 }
+

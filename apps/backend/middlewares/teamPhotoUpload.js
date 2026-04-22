@@ -3,7 +3,7 @@ const multer = require("multer");
 const { ensureUploadSubdir } = require("../services/uploads");
 
 const TEAM_PHOTOS_DIR = ensureUploadSubdir("team");
-const MAX_PHOTO_SIZE = 2 * 1024 * 1024; // 2 MB
+const MAX_PHOTO_SIZE = 2 * 1024 * 1024;
 
 const ALLOWED_PHOTO_TYPES = {
   "image/jpeg": ".jpg",

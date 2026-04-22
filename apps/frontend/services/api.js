@@ -1,6 +1,3 @@
-// API service layer for secure communication with the backend.
-// Handles CSRF tokens, cookies, and provides typed fetch wrappers.
-
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 const INTERNAL_API = process.env.INTERNAL_API_URL || "http://backend:4000/api/v1";
 
@@ -18,7 +15,6 @@ function resolveApiAssetUrl(path) {
   return `${API_BASE}/${path}`;
 }
 
-// Client-side fetch (browser) -- includes cookies and CSRF token
 async function clientFetch(path, options = {}) {
   const csrfToken = getCsrfToken();
   const headers = {
@@ -29,7 +25,6 @@ async function clientFetch(path, options = {}) {
     headers["X-CSRF-Token"] = csrfToken;
   }
 
-  // Do not set Content-Type for FormData (multipart uploads)
   if (!(options.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
@@ -40,7 +35,6 @@ async function clientFetch(path, options = {}) {
     credentials: "include",
   });
 
-  // Only redirect to login on 401 for state-changing requests (admin actions)
   if (res.status === 401) {
     const method = (options.method || "GET").toUpperCase();
     if (method !== "GET" && typeof window !== "undefined") {
@@ -51,25 +45,29 @@ async function clientFetch(path, options = {}) {
   return res.json();
 }
 
-// Server-side fetch (SSR via getServerSideProps) -- forwards cookies from incoming request
 async function serverFetch(path, cookie) {
   const headers = { "Content-Type": "application/json" };
   if (cookie) {
     headers["Cookie"] = cookie;
   }
 
-  const res = await fetch(`${INTERNAL_API}${path}`, { headers });
-  return res.json();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const res = await fetch(`${INTERNAL_API}${path}`, { headers, signal: controller.signal });
+    return res.json();
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
-// Read CSRF token from cookie (browser only)
 function getCsrfToken() {
   if (typeof document === "undefined") return null;
   const match = document.cookie.match(/csrf_token=([^;]+)/);
   return match ? match[1] : null;
 }
 
-// --- Auth ---
 async function login(email, password) {
   return clientFetch("/auth/login", {
     method: "POST",
@@ -109,7 +107,6 @@ async function confirmPasswordReset(email, resetToken, newPassword) {
   });
 }
 
-// --- Announcements ---
 async function getAnnouncements(cookie, params = {}) {
   const qs = new URLSearchParams(params).toString();
   const path = `/announcements${qs ? "?" + qs : ""}`;
@@ -117,7 +114,6 @@ async function getAnnouncements(cookie, params = {}) {
   return clientFetch(path);
 }
 
-// --- Metrics ---
 async function getMetrics(cookie, params = {}) {
   const qs = new URLSearchParams(params).toString();
   const path = `/metrics${qs ? "?" + qs : ""}`;
@@ -125,7 +121,6 @@ async function getMetrics(cookie, params = {}) {
   return clientFetch(path);
 }
 
-// --- Systems ---
 async function getSystems(cookie, params = {}) {
   const qs = new URLSearchParams(params).toString();
   const path = `/systems${qs ? "?" + qs : ""}`;
@@ -133,7 +128,6 @@ async function getSystems(cookie, params = {}) {
   return clientFetch(path);
 }
 
-// --- Team ---
 async function getTeam(cookie, params = {}) {
   const qs = new URLSearchParams(params).toString();
   const path = `/team${qs ? "?" + qs : ""}`;
@@ -141,7 +135,6 @@ async function getTeam(cookie, params = {}) {
   return clientFetch(path);
 }
 
-// --- Documents ---
 async function getDocuments(cookie, params = {}) {
   const qs = new URLSearchParams(params).toString();
   const path = `/documents${qs ? "?" + qs : ""}`;
@@ -149,7 +142,6 @@ async function getDocuments(cookie, params = {}) {
   return clientFetch(path);
 }
 
-// --- Admin mutations: Announcements ---
 async function createAnnouncement(data) {
   return clientFetch("/announcements", { method: "POST", body: JSON.stringify(data) });
 }
@@ -160,7 +152,6 @@ async function deleteAnnouncement(id) {
   return clientFetch(`/announcements/${id}`, { method: "DELETE" });
 }
 
-// --- Admin mutations: Systems ---
 async function createSystem(data) {
   return clientFetch("/systems", { method: "POST", body: JSON.stringify(data) });
 }
@@ -171,7 +162,6 @@ async function deleteSystem(id) {
   return clientFetch(`/systems/${id}`, { method: "DELETE" });
 }
 
-// --- Admin mutations: Team ---
 async function createTeamMember(data) {
   return clientFetch("/team", {
     method: "POST",
@@ -188,7 +178,6 @@ async function deleteTeamMember(id) {
   return clientFetch(`/team/${id}`, { method: "DELETE" });
 }
 
-// --- Admin mutations: Documents ---
 async function uploadDocument(formData) {
   return clientFetch("/documents", { method: "POST", body: formData });
 }
@@ -196,7 +185,6 @@ async function deleteDocument(id) {
   return clientFetch(`/documents/${id}`, { method: "DELETE" });
 }
 
-// --- Admin mutations: Metrics ---
 async function createMetric(data) {
   return clientFetch("/metrics", { method: "POST", body: JSON.stringify(data) });
 }

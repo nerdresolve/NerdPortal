@@ -15,7 +15,6 @@ router.use("/systems", systemsRoutes);
 router.use("/team", teamRoutes);
 router.use("/metrics", metricsRoutes);
 
-// Health check (no auth required)
 router.get("/health", async (req, res) => {
   const db = require("../dal/db");
   try {

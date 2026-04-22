@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { useRouter } from "next/router";
 import styles from "./Sidebar.module.css";
 
@@ -11,8 +11,6 @@ const NAV_ITEMS = [
   { href: "/sistemas", label: "Sistemas", icon: "server" },
   { href: "/chamados", label: "Chamados", icon: "ticket" },
 ];
-
-// SVG icon map (inline, no external dependencies)
 const ICONS = {
   home: (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -92,3 +90,4 @@ export default function Sidebar() {
     </aside>
   );
 }
+

@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import Layout from "../components/Layout/Layout";
-import { optionalAuthSSR, isAdminUser } from "../services/auth";
+import { resolveUser, isAdminUser } from "../services/auth";
 import {
   getSystems,
   clientFetch,
@@ -50,13 +50,18 @@ const EMPTY_FORM = {
 };
 
 export async function getServerSideProps(context) {
-  const auth = await optionalAuthSSR(context);
+  const cookie = context.req.headers.cookie || "";
 
+  let user = null;
   let systems = [];
   let loadError = "";
 
   try {
-    const result = await getSystems(auth.cookie || null, { limit: "50" });
+    const [resolvedUser, result] = await Promise.all([
+      resolveUser(cookie),
+      getSystems(cookie, { limit: "50" }),
+    ]);
+    user = resolvedUser;
     if (result.success) systems = result.data.items || [];
     else loadError = result.error || "Não foi possível carregar os sistemas no momento.";
   } catch (e) {
@@ -64,7 +69,7 @@ export async function getServerSideProps(context) {
   }
 
   return {
-    props: { user: auth.user, initialSystems: systems, initialLoadError: loadError },
+    props: { user, initialSystems: systems, initialLoadError: loadError },
   };
 }
 
@@ -235,8 +240,6 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
             </button>
           )}
         </section>
-
-        {/* Filter bar */}
         <div className={styles.filterBar}>
           <select
             className={`form-input ${styles.filterSelect}`}
@@ -262,8 +265,6 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
             {systems.length} sistema{systems.length !== 1 ? "s" : ""}
           </span>
         </div>
-
-        {/* Systems Table */}
         {systems.length === 0 ? (
           <div className={`card ${styles.emptyState}`}>
             <p>{pageError || "Nenhum sistema encontrado com os filtros aplicados."}</p>
@@ -340,8 +341,6 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
           </div>
         )}
       </Layout>
-
-      {/* Admin Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -440,3 +439,4 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
     </>
   );
 }
+

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Head from "next/head";
@@ -16,10 +16,7 @@ export async function getServerSideProps(context) {
       return { redirect: { destination: "/", permanent: false } };
     }
   } catch (e) {
-    // Not authenticated, show login
   }
-
-  // Prime CSRF cookie via internal network so the browser has it before submitting
   try {
     const res = await fetch(`${INTERNAL_API}/auth/me`);
     const setCookie = res.headers.get("set-cookie");
@@ -27,7 +24,6 @@ export async function getServerSideProps(context) {
       context.res.setHeader("Set-Cookie", setCookie);
     }
   } catch (e) {
-    // Non-fatal: login will handle missing CSRF gracefully
   }
 
   return { props: {} };
@@ -67,7 +63,6 @@ export default function LoginPage() {
       </Head>
 
       <div className={styles.container}>
-        {/* Left panel with brand visual */}
         <div className={styles.brandPanel}>
           <div className={styles.brandContent}>
             <img src="/logo.webp" alt="NerdResolve" className={styles.brandLogo} />
@@ -76,8 +71,6 @@ export default function LoginPage() {
               Portal de Tecnologia da Informação
             </p>
           </div>
-
-          {/* Brand mesh graphic elements */}
           <div className={styles.meshContainer}>
             <div className={styles.meshTriangle1} />
             <div className={styles.meshTriangle2} />
@@ -85,8 +78,6 @@ export default function LoginPage() {
             <div className={styles.meshTriangle4} />
           </div>
         </div>
-
-        {/* Right panel with login form */}
         <div className={styles.formPanel}>
           <div className={styles.formWrapper}>
             <h2 className={styles.formTitle}>Acesso ao Sistema</h2>
@@ -149,3 +140,4 @@ export default function LoginPage() {
     </>
   );
 }
+

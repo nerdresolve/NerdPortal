@@ -1,4 +1,4 @@
-.sidebar {
+﻿.sidebar {
   position: fixed;
   top: var(--header-height);
   left: 0;
@@ -70,7 +70,6 @@
   white-space: nowrap;
 }
 
-/* Brand mesh decorative element at sidebar bottom */
 .sidebarFooter {
   padding: var(--space-6);
   position: relative;
@@ -137,3 +136,4 @@
     display: none;
   }
 }
+

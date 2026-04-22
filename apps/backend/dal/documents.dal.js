@@ -1,4 +1,5 @@
 const db = require("./db");
+const { v4: uuidv4 } = require("uuid");
 
 async function findAll({ category, limit, offset }) {
   const params = [limit || 20, offset || 0];
@@ -37,18 +38,19 @@ async function findById(id) {
 }
 
 async function create({ originalName, storedName, mimeType, sizeBytes, category, description, uploaderId }) {
+  const id = uuidv4();
   const result = await db.query(
-    `INSERT INTO documents (original_name, stored_name, mime_type, size_bytes, category, description, uploader_id)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `INSERT INTO documents (id, original_name, stored_name, mime_type, size_bytes, category, description, uploader_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING id, original_name, category, created_at`,
-    [originalName, storedName, mimeType, sizeBytes, category || "general", description || null, uploaderId]
+    [id, originalName, storedName, mimeType, sizeBytes, category || "general", description || null, uploaderId]
   );
   return result.rows[0];
 }
 
 async function softDelete(id) {
   const result = await db.query(
-    `UPDATE documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id, stored_name`,
+    `UPDATE documents SET deleted_at = datetime('now') WHERE id = $1 AND deleted_at IS NULL RETURNING id, stored_name`,
     [id]
   );
   return result.rows[0] || null;
@@ -62,7 +64,7 @@ async function count(category) {
     where += ` AND category = $${params.length}`;
   }
   const result = await db.query(
-    `SELECT COUNT(*)::int AS total FROM documents WHERE ${where}`,
+    `SELECT COUNT(*) AS total FROM documents WHERE ${where}`,
     params
   );
   return result.rows[0].total;

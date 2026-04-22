@@ -1,4 +1,5 @@
 const db = require("./db");
+const { v4: uuidv4 } = require("uuid");
 
 async function findAll({ status, category, limit, offset }) {
   const params = [limit || 50, offset || 0];
@@ -41,11 +42,12 @@ async function findById(id) {
 }
 
 async function create({ name, url, description, status, category, ownerId }) {
+  const id = uuidv4();
   const result = await db.query(
-    `INSERT INTO systems (name, url, description, status, category, owner_id)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO systems (id, name, url, description, status, category, owner_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING id, name, status, category, created_at`,
-    [name, url || null, description || null, status || "active", category || "internal", ownerId || null]
+    [id, name, url || null, description || null, status || "active", category || "internal", ownerId || null]
   );
   return result.rows[0];
 }
@@ -68,7 +70,7 @@ async function update(id, { name, url, description, status, category, ownerId })
 
 async function softDelete(id) {
   const result = await db.query(
-    `UPDATE systems SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
+    `UPDATE systems SET deleted_at = datetime('now') WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
     [id]
   );
   return result.rowCount > 0;

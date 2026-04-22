@@ -1,11 +1,7 @@
-/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   output: "standalone",
-
-  // All pages use SSR by default (no static optimization)
-  // Individual pages use getServerSideProps for data fetching
 
   async rewrites() {
     return [

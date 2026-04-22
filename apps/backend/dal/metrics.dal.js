@@ -1,4 +1,5 @@
 const db = require("./db");
+const { v4: uuidv4 } = require("uuid");
 
 async function findAll({ category, kpiName, limit, offset }) {
   const params = [limit || 50, offset || 0];
@@ -42,11 +43,12 @@ async function findById(id) {
 }
 
 async function create({ kpiName, kpiValue, kpiUnit, periodStart, periodEnd, category, notes, createdBy }) {
+  const id = uuidv4();
   const result = await db.query(
-    `INSERT INTO metrics (kpi_name, kpi_value, kpi_unit, period_start, period_end, category, notes, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO metrics (id, kpi_name, kpi_value, kpi_unit, period_start, period_end, category, notes, created_by)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING id, kpi_name, kpi_value, period_start, created_at`,
-    [kpiName, kpiValue, kpiUnit || "count", periodStart, periodEnd, category || "operational", notes || null, createdBy]
+    [id, kpiName, kpiValue, kpiUnit || "count", periodStart, periodEnd, category || "operational", notes || null, createdBy]
   );
   return result.rows[0];
 }

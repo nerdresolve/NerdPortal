@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import Layout from "../components/Layout/Layout";
-import { optionalAuthSSR, isAdminUser } from "../services/auth";
+import { resolveUser, isAdminUser } from "../services/auth";
 import {
   getAnnouncements,
   clientFetch,
@@ -12,14 +12,19 @@ import {
 import styles from "../styles/Comunicados.module.css";
 
 export async function getServerSideProps(context) {
-  const auth = await optionalAuthSSR(context);
+  const cookie = context.req.headers.cookie || "";
 
+  let user = null;
   let announcements = [];
   let total = 0;
   let loadError = "";
 
   try {
-    const result = await getAnnouncements(auth.cookie || null, { limit: "20", offset: "0" });
+    const [resolvedUser, result] = await Promise.all([
+      resolveUser(cookie),
+      getAnnouncements(cookie, { limit: "20", offset: "0" }),
+    ]);
+    user = resolvedUser;
     if (result.success) {
       announcements = result.data.items || [];
       total = result.data.total || 0;
@@ -31,12 +36,7 @@ export async function getServerSideProps(context) {
   }
 
   return {
-    props: {
-      user: auth.user,
-      initialAnnouncements: announcements,
-      initialTotal: total,
-      initialLoadError: loadError,
-    },
+    props: { user, initialAnnouncements: announcements, initialTotal: total, initialLoadError: loadError },
   };
 }
 
@@ -224,8 +224,6 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
             </button>
           )}
         </section>
-
-        {/* Detail view */}
         {selected && (
           <div className={`card ${styles.detail}`}>
             <div className={styles.detailActions}>
@@ -267,8 +265,6 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
             <div className={styles.detailBody}>{selected.body}</div>
           </div>
         )}
-
-        {/* List view */}
         {!selected && (
           <>
             {announcements.length === 0 ? (
@@ -357,8 +353,6 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
           </>
         )}
       </Layout>
-
-      {/* Admin Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -446,3 +440,4 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
     </>
   );
 }
+

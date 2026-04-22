@@ -3,11 +3,10 @@ const fs = require("fs");
 const documentsDal = require("../dal/documents.dal");
 const { UPLOADS_DIR, ensureUploadsDir } = require("../services/uploads");
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 ensureUploadsDir();
 
-// Allowlist of safe MIME types
 const ALLOWED_MIME_TYPES = new Set([
   "application/pdf",
   "application/msword",
@@ -67,14 +66,11 @@ async function upload(req, res) {
   const category = req.body.category || "general";
   const description = req.body.description || null;
 
-  // Validate MIME type
   if (!ALLOWED_MIME_TYPES.has(mimetype)) {
-    // Remove the uploaded file
     fs.unlink(req.file.path, () => {});
     return res.status(400).json({ success: false, error: "File type not allowed" });
   }
 
-  // Validate file size
   if (size > MAX_FILE_SIZE) {
     fs.unlink(req.file.path, () => {});
     return res.status(400).json({ success: false, error: "File exceeds 10MB limit" });
@@ -107,7 +103,6 @@ async function download(req, res) {
 
     const filePath = path.join(UPLOADS_DIR, item.stored_name);
 
-    // Prevent path traversal
     if (!filePath.startsWith(UPLOADS_DIR)) {
       return res.status(403).json({ success: false, error: "Access denied" });
     }
@@ -132,7 +127,6 @@ async function remove(req, res) {
       return res.status(404).json({ success: false, error: "Document not found" });
     }
 
-    // Optionally remove the physical file
     const filePath = path.join(UPLOADS_DIR, item.stored_name);
     if (filePath.startsWith(UPLOADS_DIR) && fs.existsSync(filePath)) {
       fs.unlink(filePath, (err) => {
@@ -147,7 +141,6 @@ async function remove(req, res) {
   }
 }
 
-// Strip path components and dangerous characters from filenames
 function sanitizeFilename(name) {
   return path
     .basename(name)

@@ -1,14 +1,14 @@
-const { Pool } = require("pg");
-const bcrypt = require("bcrypt");
+const path = require("path");
+const { createRequire } = require("module");
 
-const pool = new Pool({
-  host: process.env.POSTGRES_HOST || "localhost",
-  port: parseInt(process.env.POSTGRES_PORT || "5432", 10),
-  database: process.env.POSTGRES_DB || "itportal",
-  user: process.env.POSTGRES_USER || "itportal_user",
-  password: process.env.POSTGRES_PASSWORD,
-});
+const requireBackend = createRequire(
+  path.join(__dirname, "../../apps/backend/package.json")
+);
+const Database = requireBackend("better-sqlite3");
+const bcrypt = requireBackend("bcryptjs");
+const { v4: uuidv4 } = requireBackend("uuid");
 
+const DB_PATH = process.env.SQLITE_DB_PATH || path.join(__dirname, "../../itportal.db");
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || "12", 10);
 
 const ADMIN_EMAIL = "admin@example.com";
@@ -16,33 +16,30 @@ const ADMIN_PASSWORD = "Admin@ITPortal2026";
 const ADMIN_NAME = "Administrador TI";
 
 async function seed() {
-  const client = await pool.connect();
+  const db = new Database(DB_PATH);
+  db.pragma("foreign_keys = ON");
 
   try {
-    const existing = await client.query(
-      "SELECT id FROM users WHERE email = $1",
-      [ADMIN_EMAIL]
-    );
+    const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(ADMIN_EMAIL);
 
-    if (existing.rows.length > 0) {
+    if (existing) {
       console.log("Admin user already exists. Skipping seed.");
       return;
     }
 
     const hash = await bcrypt.hash(ADMIN_PASSWORD, BCRYPT_ROUNDS);
+    const id = uuidv4();
 
-    await client.query(
-      `INSERT INTO users (email, password_hash, full_name, role)
-       VALUES ($1, $2, $3, 'admin')`,
-      [ADMIN_EMAIL, hash, ADMIN_NAME]
-    );
+    db.prepare(
+      `INSERT INTO users (id, email, password_hash, full_name, role)
+       VALUES (?, ?, ?, ?, 'admin')`
+    ).run(id, ADMIN_EMAIL, hash, ADMIN_NAME);
 
     console.log("Admin user created: %s", ADMIN_EMAIL);
     console.log("Default password: %s", ADMIN_PASSWORD);
     console.log("IMPORTANT: Change this password after first login.");
   } finally {
-    client.release();
-    await pool.end();
+    db.close();
   }
 }
 

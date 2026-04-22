@@ -1,4 +1,4 @@
-.header {
+﻿.header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -18,14 +18,12 @@
   margin-bottom: 0;
 }
 
-/* --- Grid --- */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--space-5);
 }
 
-/* --- Member Card --- */
 .memberCard {
   display: flex;
   flex-direction: column;
@@ -53,7 +51,6 @@
   border-style: dashed;
 }
 
-/* --- Avatar --- */
 .avatar {
   width: 56px;
   height: 56px;
@@ -79,7 +76,6 @@
   letter-spacing: 0.02em;
 }
 
-/* --- Info --- */
 .info {
   display: flex;
   flex-direction: column;
@@ -112,7 +108,6 @@
   margin-top: var(--space-2);
 }
 
-/* --- Contact --- */
 .contact {
   display: flex;
   flex-direction: column;
@@ -138,7 +133,6 @@
   font-family: var(--font-mono);
 }
 
-/* --- Form / Photo Upload --- */
 .photoField {
   margin-bottom: var(--space-5);
 }
@@ -201,7 +195,6 @@
   gap: var(--space-2);
 }
 
-/* --- Empty --- */
 .emptyState {
   padding: var(--space-12);
 }
@@ -226,3 +219,4 @@
     flex-direction: column;
   }
 }
+

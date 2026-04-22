@@ -1,4 +1,5 @@
 const db = require("./db");
+const { v4: uuidv4 } = require("uuid");
 
 async function findAll({ limit, offset }) {
   const result = await db.query(
@@ -8,7 +9,7 @@ async function findAll({ limit, offset }) {
      FROM announcements a
      JOIN users u ON u.id = a.author_id
      WHERE a.deleted_at IS NULL
-     ORDER BY a.is_pinned DESC, a.published_at DESC NULLS LAST, a.created_at DESC
+     ORDER BY a.is_pinned DESC, a.published_at DESC, a.created_at DESC
      LIMIT $1 OFFSET $2`,
     [limit || 20, offset || 0]
   );
@@ -29,11 +30,12 @@ async function findById(id) {
 }
 
 async function create({ title, body, authorId, isPinned, publishedAt }) {
+  const id = uuidv4();
   const result = await db.query(
-    `INSERT INTO announcements (title, body, author_id, is_pinned, published_at)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO announcements (id, title, body, author_id, is_pinned, published_at)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING id, title, is_pinned, published_at, created_at`,
-    [title, body, authorId, isPinned || false, publishedAt || null]
+    [id, title, body, authorId, isPinned ? 1 : 0, publishedAt || null]
   );
   return result.rows[0];
 }
@@ -47,14 +49,14 @@ async function update(id, { title, body, isPinned, publishedAt }) {
          published_at = COALESCE($5, published_at)
      WHERE id = $1 AND deleted_at IS NULL
      RETURNING id, title, is_pinned, published_at, updated_at`,
-    [id, title, body, isPinned, publishedAt]
+    [id, title, body, isPinned != null ? (isPinned ? 1 : 0) : null, publishedAt]
   );
   return result.rows[0] || null;
 }
 
 async function softDelete(id) {
   const result = await db.query(
-    `UPDATE announcements SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
+    `UPDATE announcements SET deleted_at = datetime('now') WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
     [id]
   );
   return result.rowCount > 0;
@@ -62,7 +64,7 @@ async function softDelete(id) {
 
 async function count() {
   const result = await db.query(
-    "SELECT COUNT(*)::int AS total FROM announcements WHERE deleted_at IS NULL"
+    "SELECT COUNT(*) AS total FROM announcements WHERE deleted_at IS NULL"
   );
   return result.rows[0].total;
 }
