@@ -1,6 +1,3 @@
-// Recursive sanitization of string values in request body.
-// Strips HTML tags and dangerous characters from all text inputs.
-
 function sanitizeValue(value) {
   if (typeof value === "string") {
     return value

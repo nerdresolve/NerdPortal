@@ -1,4 +1,4 @@
-.header {
+﻿.header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -21,7 +21,6 @@
   margin-bottom: 0;
 }
 
-/* --- Filter Bar --- */
 .filterBar {
   display: flex;
   align-items: center;
@@ -41,7 +40,6 @@
   color: var(--color-text-muted);
 }
 
-/* --- List --- */
 .listCard {
   padding: 0;
   overflow: hidden;
@@ -96,7 +94,6 @@
   text-decoration: underline;
 }
 
-/* --- Pagination --- */
 .pagination {
   display: flex;
   align-items: center;
@@ -116,7 +113,6 @@
   color: var(--color-text-muted);
 }
 
-/* --- Empty --- */
 .emptyState {
   padding: var(--space-12);
 }
@@ -125,3 +121,4 @@
   color: var(--gray-300);
   margin-bottom: 0;
 }
+

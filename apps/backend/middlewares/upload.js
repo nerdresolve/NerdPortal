@@ -5,7 +5,6 @@ const { ensureUploadsDir } = require("../services/uploads");
 
 const UPLOADS_DIR = ensureUploadsDir();
 
-// Cryptographically random filename to prevent collisions and path attacks
 const storage = multer.diskStorage({
   destination: function (_req, _file, cb) {
     cb(null, UPLOADS_DIR);
@@ -20,7 +19,7 @@ const storage = multer.diskStorage({
 const uploadMiddleware = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10 MB
+    fileSize: 10 * 1024 * 1024,
     files: 1,
   },
 });

@@ -10,3 +10,7 @@ pgdata/
 dist/
 .DS_Store
 .codex
+.env.local
+*.db
+*.db-shm
+*.db-wal

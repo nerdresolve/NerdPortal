@@ -1,4 +1,4 @@
-.welcome {
+﻿.welcome {
   margin-bottom: var(--space-8);
 }
 
@@ -15,7 +15,6 @@
   margin-bottom: 0;
 }
 
-/* --- Stats Grid --- */
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -52,7 +51,6 @@
   font-weight: 500;
 }
 
-/* --- Content Grid --- */
 .contentGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -75,7 +73,6 @@
   padding: var(--space-8) 0;
 }
 
-/* --- Announcements --- */
 .announcementList {
   list-style: none;
 }
@@ -109,7 +106,6 @@
   margin-bottom: 0;
 }
 
-/* --- Systems --- */
 .systemsList {
   list-style: none;
 }
@@ -140,7 +136,6 @@
   margin-top: 2px;
 }
 
-/* --- Responsive --- */
 @media (max-width: 1024px) {
   .statsGrid {
     grid-template-columns: repeat(2, 1fr);
@@ -156,3 +151,4 @@
     grid-template-columns: 1fr;
   }
 }
+

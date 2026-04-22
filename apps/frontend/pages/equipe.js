@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import Layout from "../components/Layout/Layout";
-import { optionalAuthSSR, isAdminUser } from "../services/auth";
+import { resolveUser, isAdminUser } from "../services/auth";
 import {
   getTeam,
   clientFetch,
@@ -21,14 +21,16 @@ const ALLOWED_PHOTO_TYPES = new Set([
 const MAX_PHOTO_SIZE_BYTES = 2 * 1024 * 1024;
 
 export async function getServerSideProps(context) {
-  const auth = await optionalAuthSSR(context);
+  const cookie = context.req.headers.cookie || "";
 
+  let user = null;
   let members = [];
   let loadError = "";
 
   try {
-    const activeParam = isAdminUser(auth.user) ? "false" : "true";
-    const result = await getTeam(auth.cookie || null, { limit: "50", active: activeParam });
+    user = await resolveUser(cookie);
+    const activeParam = isAdminUser(user) ? "false" : "true";
+    const result = await getTeam(cookie, { limit: "50", active: activeParam });
     if (result.success) members = result.data.items || [];
     else loadError = result.error || "Não foi possível carregar a equipe no momento.";
   } catch (e) {
@@ -36,7 +38,7 @@ export async function getServerSideProps(context) {
   }
 
   return {
-    props: { user: auth.user, initialMembers: members, initialLoadError: loadError },
+    props: { user, initialMembers: members, initialLoadError: loadError },
   };
 }
 

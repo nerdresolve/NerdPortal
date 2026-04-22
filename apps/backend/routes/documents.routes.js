@@ -5,12 +5,10 @@ const upload = require("../middlewares/upload");
 
 const router = Router();
 
-// Public read
 router.get("/", controller.list);
 router.get("/:id", controller.getById);
 router.get("/:id/download", controller.download);
 
-// Admin write
 router.post("/", requireRole("admin"), upload.single("file"), controller.upload);
 router.delete("/:id", requireRole("admin"), controller.remove);
 

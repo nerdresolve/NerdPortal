@@ -1,4 +1,5 @@
 const db = require("./db");
+const { v4: uuidv4 } = require("uuid");
 
 function getExecutor(client) {
   return client || db;
@@ -29,11 +30,12 @@ async function findById(id, client) {
 }
 
 async function create({ email, passwordHash, fullName, role }) {
+  const id = uuidv4();
   const result = await db.query(
-    `INSERT INTO users (email, password_hash, full_name, role)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO users (id, email, password_hash, full_name, role)
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING id, email, full_name, role, created_at`,
-    [email, passwordHash, fullName, role || "viewer"]
+    [id, email, passwordHash, fullName, role || "viewer"]
   );
   return result.rows[0];
 }
@@ -41,7 +43,7 @@ async function create({ email, passwordHash, fullName, role }) {
 async function updateLastLogin(id, client) {
   const executor = getExecutor(client);
   await executor.query(
-    "UPDATE users SET last_login_at = NOW() WHERE id = $1",
+    "UPDATE users SET last_login_at = datetime('now') WHERE id = $1",
     [id]
   );
 }
@@ -49,7 +51,7 @@ async function updateLastLogin(id, client) {
 async function updatePassword(id, passwordHash, client) {
   const executor = getExecutor(client);
   await executor.query(
-    "UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2",
+    "UPDATE users SET password_hash = $1, updated_at = datetime('now') WHERE id = $2",
     [passwordHash, id]
   );
 }

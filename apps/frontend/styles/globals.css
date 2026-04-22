@@ -1,15 +1,7 @@
-/* ============================================================
-   ITPortal - Global Styles
-   Grupo Bravante Brand Identity Implementation
-   ============================================================ */
-
-/* --- Brand Tokens --- */
-:root {
-  /* Primary Colors */
+﻿:root {
   --verde-bravante: #007B4E;
   --amarelo-bravante: #EAAB00;
 
-  /* Secondary / Support Colors */
   --verde-70: #629676;
   --verde-80: #508074;
   --verde-45: #93B29C;
@@ -19,7 +11,6 @@
   --amarelo-45: #FCD798;
   --cinza-bravante: #989AA5;
 
-  /* Neutrals */
   --white: #FFFFFF;
   --off-white: #F7F8FA;
   --gray-100: #F0F1F3;
@@ -29,7 +20,6 @@
   --gray-800: #2E2F35;
   --black: #1A1B1F;
 
-  /* Semantic */
   --color-primary: var(--verde-bravante);
   --color-accent: var(--amarelo-bravante);
   --color-bg: var(--white);
@@ -41,11 +31,9 @@
   --color-error: #DC2626;
   --color-warning: var(--amarelo-bravante);
 
-  /* Typography - System fonts per brand manual (web/system) */
   --font-primary: "Lucida Grande", "Lucida Sans", "Lucida Sans Unicode", sans-serif;
   --font-mono: "SF Mono", "Cascadia Code", "Consolas", monospace;
 
-  /* Spacing Scale */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -57,7 +45,6 @@
   --space-12: 3rem;
   --space-16: 4rem;
 
-  /* Layout */
   --header-height: 64px;
   --sidebar-width: 260px;
   --sidebar-collapsed: 64px;
@@ -65,17 +52,14 @@
   --border-radius: 6px;
   --border-radius-lg: 10px;
 
-  /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.10);
 
-  /* Transitions */
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease;
 }
 
-/* --- Reset & Base --- */
 *,
 *::before,
 *::after {
@@ -98,7 +82,6 @@ body {
   min-height: 100vh;
 }
 
-/* Brand manual: left-aligned text only */
 h1, h2, h3, h4, h5, h6, p, li, td, th, label, span, a {
   text-align: left;
 }
@@ -119,7 +102,6 @@ img {
   display: block;
 }
 
-/* --- Typography Scale --- */
 h1 {
   font-size: 1.75rem;
   font-weight: 700;
@@ -149,7 +131,6 @@ p {
   color: var(--gray-600);
 }
 
-/* --- Layout Shell --- */
 .app-layout {
   display: flex;
   min-height: 100vh;
@@ -172,7 +153,6 @@ p {
   width: 100%;
 }
 
-/* --- Utility Classes --- */
 .card {
   background: var(--white);
   border: 1px solid var(--color-border);
@@ -234,7 +214,6 @@ p {
   color: var(--white);
 }
 
-/* --- Form Elements --- */
 .form-group {
   margin-bottom: var(--space-4);
 }
@@ -269,7 +248,6 @@ p {
   color: var(--gray-300);
 }
 
-/* --- Status Badges --- */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -295,7 +273,6 @@ p {
   color: var(--color-error);
 }
 
-/* --- Data Table --- */
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -322,7 +299,6 @@ p {
   background: var(--off-white);
 }
 
-/* --- Brand Mesh Graphic Element (331.3 degrees) --- */
 .mesh-accent {
   position: fixed;
   bottom: 0;
@@ -361,7 +337,6 @@ p {
   transform: rotate(331.3deg);
 }
 
-/* --- Admin / Danger Buttons --- */
 .btn-danger {
   background: var(--color-error);
   color: var(--white);
@@ -388,7 +363,6 @@ p {
   font-size: 0.8125rem;
 }
 
-/* --- Admin Modal --- */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -468,7 +442,6 @@ p {
   gap: var(--space-4);
 }
 
-/* --- Status Banner --- */
 .status-banner {
   margin-bottom: var(--space-4);
   padding: var(--space-3) var(--space-4);
@@ -484,7 +457,6 @@ p {
   border-color: rgba(220, 38, 38, 0.25);
 }
 
-/* --- Toast Notification --- */
 .toast {
   position: fixed;
   bottom: var(--space-8);
@@ -514,7 +486,6 @@ p {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* --- Responsive --- */
 @media (max-width: 1024px) {
   .app-main {
     margin-left: var(--sidebar-collapsed);
@@ -530,3 +501,4 @@ p {
     padding: var(--space-4);
   }
 }
+

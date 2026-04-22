@@ -1,6 +1,6 @@
-import Head from "next/head";
+﻿import Head from "next/head";
 import Layout from "../components/Layout/Layout";
-import { optionalAuthSSR } from "../services/auth";
+import { resolveUser } from "../services/auth";
 import { getAnnouncements, getSystems } from "../services/api";
 import styles from "../styles/Home.module.css";
 
@@ -12,17 +12,21 @@ const STATUS_LABELS = {
 };
 
 export async function getServerSideProps(context) {
-  const auth = await optionalAuthSSR(context);
+  const cookie = context.req.headers.cookie || "";
 
+  let user = null;
   let announcements = [];
   let systems = [];
   let loadError = "";
 
   try {
-    const [annResult, sysResult] = await Promise.all([
-      getAnnouncements(auth.cookie || null, { limit: "5" }),
-      getSystems(auth.cookie || null, { limit: "10" }),
+    const [resolvedUser, annResult, sysResult] = await Promise.all([
+      resolveUser(cookie),
+      getAnnouncements(cookie, { limit: "5" }),
+      getSystems(cookie, { limit: "10" }),
     ]);
+
+    user = resolvedUser;
 
     if (annResult.success) announcements = annResult.data.items || [];
     if (sysResult.success) systems = sysResult.data.items || [];
@@ -39,12 +43,7 @@ export async function getServerSideProps(context) {
   }
 
   return {
-    props: {
-      user: auth.user,
-      announcements,
-      systems,
-      loadError,
-    },
+    props: { user, announcements, systems, loadError },
   };
 }
 
@@ -62,8 +61,6 @@ export default function HomePage({ user, announcements, systems, loadError }) {
         {loadError && (
           <div className="status-banner status-banner-error">{loadError}</div>
         )}
-
-        {/* Welcome Section */}
         <section className={styles.welcome}>
           <h1 className={styles.welcomeTitle}>
             Portal do TI
@@ -72,8 +69,6 @@ export default function HomePage({ user, announcements, systems, loadError }) {
             Central de acesso a sistemas, documentos, comunicados e métricas do setor de TI do Grupo Bravante.
           </p>
         </section>
-
-        {/* Quick Stats */}
         <section className={styles.statsGrid}>
           <div className={`card ${styles.statCard}`}>
             <span className={styles.statValue}>{systems.length}</span>
@@ -92,10 +87,7 @@ export default function HomePage({ user, announcements, systems, loadError }) {
             <span className={styles.statLabel}>Comunicados Recentes</span>
           </div>
         </section>
-
-        {/* Content Grid */}
         <div className={styles.contentGrid}>
-          {/* Recent Announcements */}
           <section className="card">
             <div className="card-header">
               <h2>Comunicados Recentes</h2>
@@ -123,8 +115,6 @@ export default function HomePage({ user, announcements, systems, loadError }) {
               </ul>
             )}
           </section>
-
-          {/* Systems Overview */}
           <section className="card">
             <div className="card-header">
               <h2>Sistemas Internos</h2>
@@ -156,3 +146,4 @@ export default function HomePage({ user, announcements, systems, loadError }) {
     </>
   );
 }
+

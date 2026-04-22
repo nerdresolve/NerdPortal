@@ -597,7 +597,7 @@ ITPortal/
     docker-compose.yml          Orquestracao (db + backend + frontend)
 
   docs/
-    Claude.md                   Documentacao tecnica e decisoes
+    technical_memory.md         Documentacao tecnica e decisoes
     progress.txt                Checklist de progresso
     security_audit_report.md    Relatorio de auditoria de seguranca
     security_audit.sh           Script de auditoria automatizada
@@ -747,11 +747,100 @@ O bcrypt requer ferramentas de compilacao nativas. No Linux: `sudo apt install b
 
 ---
 
-Grupo Bravante - Tecnologia da Informacao
-ITPortal v0.1.0
+## 14. Configuracao para Producao com Dominio Proprio
+
+Quando o portal for publicado em um servidor com dominio definido (ex: `portal.bravante.com.br`), os seguintes pontos precisam ser atualizados:
 
 ---
 
-## Creditos
+### 14.1 Variaveis de ambiente (arquivo `.env`)
 
-Desenvolvido por **mariathdev**.
+| Variavel | Valor atual (dev) | O que colocar em producao |
+|---|---|---|
+| `FRONTEND_URL` | `http://localhost:3000` | `https://portal.bravante.com.br` |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:4000/api/v1` | `https://api.portal.bravante.com.br/api/v1` (ou o caminho da API no mesmo dominio) |
+| `INTERNAL_API_URL` | `http://localhost:4000/api/v1` | URL interna do container backend (ex: `http://backend:4000/api/v1` se usar Docker) |
+| `ALLOWED_ORIGINS` | *(vazio)* | `https://portal.bravante.com.br` |
+| `NODE_ENV` | `production` | `production` (ja correto) |
+
+**`FRONTEND_URL`** e usada pelo backend para montar o link de redefinicao de senha que aparece no e-mail. Se esse valor estiver errado, o link no e-mail vai apontar para localhost em vez do dominio real.
+
+---
+
+### 14.2 Link no e-mail de recuperacao de senha
+
+**Arquivo:** `apps/backend/services/password-reset.js`
+
+Funcao `buildResetEmailHtml`, linha:
+
+```js
+const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, "");
+```
+
+O link e construido automaticamente a partir de `FRONTEND_URL`. Basta atualizar essa variavel no `.env` — nenhuma alteracao de codigo e necessaria.
+
+---
+
+### 14.3 CORS — origens permitidas
+
+**Arquivo:** `apps/backend/middlewares/cors.js`
+
+```js
+const defaultOrigins = ["http://localhost:3000", "http://itportal_frontend:3000"];
+const envOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean)
+  : [];
+```
+
+Em producao, adicione o dominio do frontend na variavel `ALLOWED_ORIGINS` do `.env`:
+
+```
+ALLOWED_ORIGINS=https://portal.bravante.com.br
+```
+
+Se houver mais de um dominio (ex: www + apex), separe por virgula:
+
+```
+ALLOWED_ORIGINS=https://portal.bravante.com.br,https://www.portal.bravante.com.br
+```
+
+---
+
+### 14.4 Cookie de sessao (HTTPS obrigatorio em producao)
+
+**Arquivo:** `apps/backend/middlewares/session.js`
+
+O cookie de sessao ja tem `secure: true` quando `NODE_ENV=production`. Isso exige que o frontend e a API estejam servidos via **HTTPS**. Se o dominio nao tiver certificado SSL configurado, o login nao funcionara porque o navegador recusara o cookie.
+
+Use Let's Encrypt com Nginx ou Caddy como reverse proxy na frente do Node.js.
+
+---
+
+### 14.5 URLs hardcoded no frontend
+
+**Arquivo:** `apps/frontend/.env.local`
+
+```
+NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
+INTERNAL_API_URL=http://localhost:4000/api/v1
+```
+
+Atualize ambas para os valores de producao antes de fazer o build (`npm run build`). O `NEXT_PUBLIC_API_URL` e embutido no bundle do navegador durante o build — nao basta alterar em runtime.
+
+---
+
+### Resumo do checklist de deploy
+
+- [ ] Configurar DNS apontando o dominio para o IP do servidor
+- [ ] Instalar certificado SSL (HTTPS) via Let's Encrypt ou similar
+- [ ] Atualizar `FRONTEND_URL` no `.env` com o dominio real
+- [ ] Atualizar `NEXT_PUBLIC_API_URL` e `INTERNAL_API_URL` no `.env` e em `apps/frontend/.env.local`
+- [ ] Preencher `ALLOWED_ORIGINS` no `.env` com o dominio do frontend
+- [ ] Confirmar `NODE_ENV=production` no `.env`
+- [ ] Fazer build do frontend: `cd apps/frontend && npm run build`
+- [ ] Reiniciar o backend para carregar as novas variaveis
+
+---
+
+Grupo Bravante - Tecnologia da Informacao
+ITPortal v0.1.0

@@ -1,10 +1,15 @@
 const db = require("./db");
+const { v4: uuidv4 } = require("uuid");
+
+function getExecutor(client) {
+  return client || db;
+}
 
 async function invalidateActiveByUserId(userId, client) {
-  const executor = client || db;
+  const executor = getExecutor(client);
   await executor.query(
     `UPDATE password_reset_requests
-     SET invalidated_at = NOW()
+     SET invalidated_at = datetime('now')
      WHERE user_id = $1
        AND used_at IS NULL
        AND invalidated_at IS NULL`,
@@ -13,20 +18,22 @@ async function invalidateActiveByUserId(userId, client) {
 }
 
 async function create({ userId, requestEmail, codeHash, expiresAt, requestIp, requestUserAgent }, client) {
-  const executor = client || db;
+  const executor = getExecutor(client);
+  const id = uuidv4();
+  const expiresAtStr = expiresAt instanceof Date ? expiresAt.toISOString() : expiresAt;
   const result = await executor.query(
     `INSERT INTO password_reset_requests (
-        user_id, request_email, code_hash, expires_at, request_ip, request_user_agent
+        id, user_id, request_email, code_hash, expires_at, request_ip, request_user_agent
      )
-     VALUES ($1, $2, $3, $4, $5, $6)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING id, user_id, request_email, expires_at, created_at`,
-    [userId, requestEmail, codeHash, expiresAt, requestIp || null, requestUserAgent || null]
+    [id, userId, requestEmail, codeHash, expiresAtStr, requestIp || null, requestUserAgent || null]
   );
   return result.rows[0] || null;
 }
 
 async function findLatestActiveByEmail(requestEmail, client) {
-  const executor = client || db;
+  const executor = getExecutor(client);
   const result = await executor.query(
     `SELECT pr.id, pr.user_id, pr.request_email, pr.code_hash, pr.reset_token_hash,
             pr.attempt_count, pr.expires_at, pr.verified_at, pr.used_at,
@@ -45,11 +52,11 @@ async function findLatestActiveByEmail(requestEmail, client) {
 }
 
 async function incrementAttempts(id, client) {
-  const executor = client || db;
+  const executor = getExecutor(client);
   const result = await executor.query(
     `UPDATE password_reset_requests
      SET attempt_count = attempt_count + 1,
-         last_attempt_at = NOW()
+         last_attempt_at = datetime('now')
      WHERE id = $1
      RETURNING id, attempt_count, last_attempt_at`,
     [id]
@@ -58,10 +65,10 @@ async function incrementAttempts(id, client) {
 }
 
 async function markVerified(id, resetTokenHash, client) {
-  const executor = client || db;
+  const executor = getExecutor(client);
   const result = await executor.query(
     `UPDATE password_reset_requests
-     SET verified_at = NOW(),
+     SET verified_at = datetime('now'),
          reset_token_hash = $2
      WHERE id = $1
      RETURNING id, user_id, request_email, expires_at, verified_at`,
@@ -71,17 +78,17 @@ async function markVerified(id, resetTokenHash, client) {
 }
 
 async function invalidateById(id, client) {
-  const executor = client || db;
+  const executor = getExecutor(client);
   await executor.query(
     `UPDATE password_reset_requests
-     SET invalidated_at = NOW()
+     SET invalidated_at = datetime('now')
      WHERE id = $1`,
     [id]
   );
 }
 
 async function findVerifiedByEmailAndToken(requestEmail, resetTokenHash, client) {
-  const executor = client || db;
+  const executor = getExecutor(client);
   const result = await executor.query(
     `SELECT pr.id, pr.user_id, pr.request_email, pr.code_hash, pr.reset_token_hash,
             pr.attempt_count, pr.expires_at, pr.verified_at, pr.used_at,
@@ -93,7 +100,7 @@ async function findVerifiedByEmailAndToken(requestEmail, resetTokenHash, client)
        AND pr.reset_token_hash = $2
        AND pr.used_at IS NULL
        AND pr.invalidated_at IS NULL
-     ORDER BY pr.verified_at DESC NULLS LAST, pr.created_at DESC
+     ORDER BY pr.verified_at DESC, pr.created_at DESC
      LIMIT 1`,
     [requestEmail, resetTokenHash]
   );
@@ -101,10 +108,10 @@ async function findVerifiedByEmailAndToken(requestEmail, resetTokenHash, client)
 }
 
 async function markUsed(id, client) {
-  const executor = client || db;
+  const executor = getExecutor(client);
   await executor.query(
     `UPDATE password_reset_requests
-     SET used_at = NOW()
+     SET used_at = datetime('now')
      WHERE id = $1`,
     [id]
   );

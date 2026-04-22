@@ -1,32 +1,24 @@
-// Server-side authentication helpers for getServerSideProps.
-
 const { getMe } = require("./api");
 
 function isAdminUser(user) {
   return !!user && user.role === "admin";
 }
 
-// Attempts to resolve user from session cookie.
-// Returns { user, cookie } if authenticated, { user: null, cookie: "" } otherwise.
-// Never redirects -- pages are publicly accessible.
-async function optionalAuthSSR(context) {
-  const cookie = context.req.headers.cookie || "";
-
+async function resolveUser(cookie) {
   try {
     const result = await getMe(cookie);
-
-    if (result.success && result.data) {
-      return { user: result.data, cookie };
-    }
+    return result.success && result.data ? result.data : null;
   } catch (e) {
-    // Session invalid or backend unreachable
+    return null;
   }
-
-  return { user: null, cookie: "" };
 }
 
-// Strict guard for admin-only pages (e.g., /login inverse check).
-// Redirects to /login if not authenticated.
+async function optionalAuthSSR(context) {
+  const cookie = context.req.headers.cookie || "";
+  const user = await resolveUser(cookie);
+  return { user, cookie: user ? cookie : "" };
+}
+
 async function requireAuthSSR(context) {
   const cookie = context.req.headers.cookie || "";
 
@@ -53,4 +45,4 @@ async function requireAuthSSR(context) {
   }
 }
 
-module.exports = { optionalAuthSSR, requireAuthSSR, isAdminUser };
+module.exports = { resolveUser, optionalAuthSSR, requireAuthSSR, isAdminUser };

@@ -1,14 +1,12 @@
-import Head from "next/head";
+﻿import Head from "next/head";
 import Layout from "../components/Layout/Layout";
-import { optionalAuthSSR } from "../services/auth";
+import { resolveUser } from "../services/auth";
 import styles from "../styles/Chamados.module.css";
 
 export async function getServerSideProps(context) {
-  const auth = await optionalAuthSSR(context);
-
-  return {
-    props: { user: auth.user },
-  };
+  const cookie = context.req.headers.cookie || "";
+  const user = await resolveUser(cookie);
+  return { props: { user } };
 }
 
 const STEPS = [
@@ -76,8 +74,6 @@ export default function ChamadosPage({ user }) {
             Orientações para registro e acompanhamento de solicitações ao setor de TI.
           </p>
         </section>
-
-        {/* Steps */}
         <section className={styles.stepsSection}>
           <h2 className={styles.sectionTitle}>Como abrir um chamado</h2>
           <div className={styles.stepsGrid}>
@@ -90,8 +86,6 @@ export default function ChamadosPage({ user }) {
             ))}
           </div>
         </section>
-
-        {/* Categories */}
         <section className={styles.categoriesSection}>
           <h2 className={styles.sectionTitle}>Categorias de Chamado</h2>
           <div className={styles.categoriesGrid}>
@@ -106,8 +100,6 @@ export default function ChamadosPage({ user }) {
             ))}
           </div>
         </section>
-
-        {/* Contact */}
         <section className={`card ${styles.contactSection}`}>
           <h2 className={styles.sectionTitle}>Contato Direto</h2>
           <p className={styles.contactText}>
@@ -134,3 +126,4 @@ export default function ChamadosPage({ user }) {
     </>
   );
 }
+

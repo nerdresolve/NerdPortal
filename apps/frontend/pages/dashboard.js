@@ -1,18 +1,23 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import Layout from "../components/Layout/Layout";
-import { optionalAuthSSR, isAdminUser } from "../services/auth";
+import { resolveUser, isAdminUser } from "../services/auth";
 import { getMetrics, clientFetch, createMetric, updateMetric, deleteMetric } from "../services/api";
 import styles from "../styles/Dashboard.module.css";
 
 export async function getServerSideProps(context) {
-  const auth = await optionalAuthSSR(context);
+  const cookie = context.req.headers.cookie || "";
 
+  let user = null;
   let metrics = [];
   let loadError = "";
 
   try {
-    const result = await getMetrics(auth.cookie || null, { limit: "50" });
+    const [resolvedUser, result] = await Promise.all([
+      resolveUser(cookie),
+      getMetrics(cookie, { limit: "50" }),
+    ]);
+    user = resolvedUser;
     if (result.success) metrics = result.data.items || [];
     else loadError = result.error || "Não foi possível carregar as métricas no momento.";
   } catch (e) {
@@ -20,7 +25,7 @@ export async function getServerSideProps(context) {
   }
 
   return {
-    props: { user: auth.user, initialMetrics: metrics, initialLoadError: loadError },
+    props: { user, initialMetrics: metrics, initialLoadError: loadError },
   };
 }
 
@@ -255,8 +260,6 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
             </button>
           )}
         </section>
-
-        {/* Summary KPI Cards */}
         {latestKpis.length > 0 && (
           <section className={styles.kpiGrid}>
             {latestKpis.map((kpi) => (
@@ -272,7 +275,7 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
                   <span className={styles.kpiName}>{kpi.kpi_name}</span>
                   <span className={styles.kpiPeriod}>
                     {new Date(kpi.period_start).toLocaleDateString("pt-BR")}
-                    {" – "}
+                    {" → "}
                     {new Date(kpi.period_end).toLocaleDateString("pt-BR")}
                   </span>
                 </div>
@@ -280,8 +283,6 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
             ))}
           </section>
         )}
-
-        {/* Category Sections */}
         {categories.length === 0 ? (
           <div className={`card ${styles.emptyState}`}>
             <p>{pageError || `Nenhuma métrica registrada.${isAdmin ? " Adicione KPIs usando o botão acima." : ""}`}</p>
@@ -328,7 +329,7 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
                         </td>
                         <td>
                           {new Date(m.period_start).toLocaleDateString("pt-BR")}
-                          {" – "}
+                          {" → "}
                           {new Date(m.period_end).toLocaleDateString("pt-BR")}
                         </td>
                         <td>{m.created_by_name || "-"}</td>
@@ -362,8 +363,6 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
           ))
         )}
       </Layout>
-
-      {/* Admin Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -500,3 +499,4 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
     </>
   );
 }
+

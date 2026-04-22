@@ -1,4 +1,4 @@
-.footer {
+﻿.footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -18,3 +18,4 @@
   color: var(--gray-300);
   font-family: var(--font-mono);
 }
+

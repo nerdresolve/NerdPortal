@@ -1,10 +1,20 @@
 const db = require("./db");
+const { v4: uuidv4 } = require("uuid");
 
 async function logAction({ userId, action, entity, entityId, details, ipAddress, userAgent }) {
   await db.query(
-    `INSERT INTO audit_logs (user_id, action, entity, entity_id, details, ip_address, user_agent)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [userId, action, entity, entityId || null, details ? JSON.stringify(details) : null, ipAddress, userAgent || null]
+    `INSERT INTO audit_logs (id, user_id, action, entity, entity_id, details, ip_address, user_agent)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [
+      uuidv4(),
+      userId,
+      action,
+      entity,
+      entityId || null,
+      details ? JSON.stringify(details) : null,
+      ipAddress,
+      userAgent || null,
+    ]
   );
 }
 

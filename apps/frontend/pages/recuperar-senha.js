@@ -1,10 +1,8 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import Link from "next/link";
 import Head from "next/head";
 import { getMe, requestPasswordReset, verifyPasswordResetCode, confirmPasswordReset } from "../services/api";
 import styles from "../styles/RecuperarSenha.module.css";
-
-const INTERNAL_API = process.env.INTERNAL_API_URL || "http://backend:4000/api/v1";
 
 export async function getServerSideProps(context) {
   const cookie = context.req.headers.cookie || "";
@@ -14,19 +12,7 @@ export async function getServerSideProps(context) {
     if (result.success && result.data) {
       return { redirect: { destination: "/", permanent: false } };
     }
-  } catch (e) {
-    // Not authenticated, show recovery flow
-  }
-
-  try {
-    const res = await fetch(`${INTERNAL_API}/auth/me`);
-    const setCookie = res.headers.get("set-cookie");
-    if (setCookie) {
-      context.res.setHeader("Set-Cookie", setCookie);
-    }
-  } catch (e) {
-    // Non-fatal: the form request will surface any CSRF issue
-  }
+  } catch (e) {}
 
   return { props: {} };
 }
@@ -320,3 +306,4 @@ export default function RecuperarSenhaPage() {
     </>
   );
 }
+

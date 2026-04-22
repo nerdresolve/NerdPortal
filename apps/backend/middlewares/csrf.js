@@ -1,9 +1,5 @@
 const crypto = require("crypto");
 
-// Double-submit cookie CSRF protection.
-// A CSRF token is set in a readable cookie and must be echoed
-// back via the X-CSRF-Token header on state-changing requests.
-
 const CSRF_COOKIE = "csrf_token";
 const CSRF_HEADER = "x-csrf-token";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -13,22 +9,20 @@ function generateToken() {
 }
 
 function csrfProtection(req, res, next) {
-  // Ensure a CSRF token cookie exists
   if (!req.cookies[CSRF_COOKIE]) {
     const token = generateToken();
     res.cookie(CSRF_COOKIE, token, {
-      httpOnly: false, // Must be readable by frontend JS
+      httpOnly: false,
       sameSite: "strict",
       secure: process.env.NODE_ENV === "production",
       path: "/",
-      maxAge: 3600000, // 1 hour
+      maxAge: 3600000,
     });
     req.csrfToken = token;
   } else {
     req.csrfToken = req.cookies[CSRF_COOKIE];
   }
 
-  // Skip validation for safe methods
   if (SAFE_METHODS.has(req.method)) {
     return next();
   }
@@ -43,7 +37,6 @@ function csrfProtection(req, res, next) {
     });
   }
 
-  // Constant-time comparison to prevent timing attacks
   const headerBuf = Buffer.from(headerToken);
   const cookieBuf = Buffer.from(cookieToken);
 

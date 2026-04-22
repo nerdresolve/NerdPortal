@@ -1,4 +1,4 @@
-.header {
+﻿.header {
   margin-bottom: var(--space-8);
 }
 
@@ -21,7 +21,6 @@
   margin-bottom: var(--space-5);
 }
 
-/* --- Steps --- */
 .stepsSection {
   margin-bottom: var(--space-10);
 }
@@ -61,7 +60,6 @@
   margin-bottom: 0;
 }
 
-/* --- Categories --- */
 .categoriesSection {
   margin-bottom: var(--space-10);
 }
@@ -107,7 +105,6 @@
   margin-bottom: 0;
 }
 
-/* --- Contact --- */
 .contactSection {
   margin-bottom: var(--space-8);
 }
@@ -166,3 +163,4 @@ a.contactValue:hover {
     gap: var(--space-4);
   }
 }
+
