@@ -1,6 +1,6 @@
-# Claude.md - ITPortal Technical Memory
+# ITPortal - Referência Técnica
 
-## Last Updated: 2026-03-30
+## Última Atualização: 2026-04-01
 
 ---
 
@@ -36,7 +36,7 @@ governed portal. Classified as a critical corporate asset.
     /seeds           -- Initial data for development and staging
   /docker            -- docker-compose.yml and Dockerfiles
   /uploads           -- User-uploaded files (served via backend)
-  /docs              -- Claude.md, progress.txt, technical documentation
+  /docs              -- technical-reference.md, progress.txt, documentacao tecnica
 ```
 
 ## 4. Database Architecture (PostgreSQL 16)

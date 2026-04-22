@@ -404,7 +404,7 @@ async function confirmPasswordReset(req, res) {
       await passwordResetDal.markUsed(requestRecord.id, client);
       await passwordResetDal.invalidateActiveByUserId(requestRecord.user_id, client);
       await client.query(
-        "DELETE FROM sessions WHERE json_extract(sess, '$.userId') = ?",
+        "DELETE FROM sessions WHERE json_extract(sess, '$.userId') = $1",
         [String(requestRecord.user_id)]
       );
       await client.query("COMMIT");

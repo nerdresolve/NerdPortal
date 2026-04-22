@@ -7,23 +7,27 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "migrate": "node database/migrate.js"
+    "migrate": "node database/migrate.js",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^11.0.0",
-    "better-sqlite3-session-store": "^0.1.0",
+    "better-sqlite3": "^11.10.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
-    "dotenv": "^17.4.2",
+    "dotenv": "^16.6.1",
     "express": "^4.21.0",
     "express-rate-limit": "^7.4.1",
     "express-session": "^1.18.0",
     "helmet": "^8.0.0",
     "multer": "^1.4.5-lts.1",
-    "nodemailer": "^6.9.0",
     "uuid": "^10.0.0",
     "winston": "^3.14.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
   },
   "engines": {
     "node": ">=20.0.0"
