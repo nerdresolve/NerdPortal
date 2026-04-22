@@ -1,15 +1,20 @@
 const fs = require("fs");
 const path = require("path");
 const Database = require("better-sqlite3");
+const { v4: uuidv4 } = require("uuid");
 
-const DB_PATH = process.env.SQLITE_DB_PATH || path.join(__dirname, "../../../itportal.db");
+const DB_PATH =
+  process.env.SQLITE_DB_PATH ||
+  path.resolve(__dirname, "../../../database/itportal.db");
+
 const MIGRATIONS_DIR = path.resolve(__dirname, "../../../database/migrations");
 
-const db = new Database(DB_PATH);
-db.pragma("journal_mode = WAL");
-db.pragma("foreign_keys = ON");
+function run() {
+  const db = new Database(DB_PATH);
+  db.pragma("journal_mode = WAL");
+  db.pragma("foreign_keys = ON");
+  db.function("gen_random_uuid", () => uuidv4());
 
-function ensureMigrationsTable() {
   db.prepare(`
     CREATE TABLE IF NOT EXISTS _migrations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -17,17 +22,10 @@ function ensureMigrationsTable() {
       executed_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `).run();
-}
 
-function getExecutedMigrations() {
-  return new Set(
+  const executed = new Set(
     db.prepare("SELECT filename FROM _migrations ORDER BY filename").all().map((r) => r.filename)
   );
-}
-
-function run() {
-  ensureMigrationsTable();
-  const executed = getExecutedMigrations();
 
   const files = fs
     .readdirSync(MIGRATIONS_DIR)
@@ -44,13 +42,13 @@ function run() {
 
     const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), "utf-8");
 
-    const txn = db.transaction(() => {
+    const migrate = db.transaction(() => {
       db.exec(sql);
       db.prepare("INSERT INTO _migrations (filename) VALUES (?)").run(file);
     });
 
     try {
-      txn();
+      migrate();
       console.log("[OK]   %s", file);
       applied++;
     } catch (err) {

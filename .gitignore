@@ -1,6 +1,10 @@
 node_modules/
 .next/
 .env
+.env.local
+*.db
+*.db-shm
+*.db-wal
 *.log
 uploads/*
 !uploads/.gitkeep
@@ -10,7 +14,4 @@ pgdata/
 dist/
 .DS_Store
 .codex
-.env.local
-*.db
-*.db-shm
-*.db-wal
+.claude/

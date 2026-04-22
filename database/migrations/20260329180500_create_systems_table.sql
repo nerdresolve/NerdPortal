@@ -1,7 +1,15 @@
 -- Migration: 20260329180500_create_systems_table.sql
+-- Internal systems catalog with status tracking.
 
-CREATE TABLE systems (
-    id TEXT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS systems (
+    id TEXT PRIMARY KEY DEFAULT (
+        lower(hex(randomblob(4))) || '-' ||
+        lower(hex(randomblob(2))) || '-4' ||
+        substr(lower(hex(randomblob(2))),2) || '-' ||
+        substr('89ab', abs(random()) % 4 + 1, 1) ||
+        substr(lower(hex(randomblob(2))),2) || '-' ||
+        lower(hex(randomblob(6)))
+    ),
     name TEXT NOT NULL,
     url TEXT,
     description TEXT,
@@ -13,12 +21,13 @@ CREATE TABLE systems (
     deleted_at TEXT
 );
 
-CREATE INDEX idx_systems_status ON systems (status) WHERE deleted_at IS NULL;
-CREATE INDEX idx_systems_category ON systems (category) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_systems_status ON systems (status) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_systems_category ON systems (category) WHERE deleted_at IS NULL;
 
-CREATE TRIGGER trg_systems_updated_at
+CREATE TRIGGER IF NOT EXISTS trg_systems_updated_at
     AFTER UPDATE ON systems
     FOR EACH ROW
-BEGIN
-    UPDATE systems SET updated_at = datetime('now') WHERE id = NEW.id;
-END;
+    WHEN NEW.updated_at = OLD.updated_at
+    BEGIN
+        UPDATE systems SET updated_at = datetime('now') WHERE id = NEW.id;
+    END;
