@@ -1,36 +1,35 @@
-function sanitizeValue(value) {
+const { escapeHtml } = require("../utils/sanitize");
+
+// Campos de credencial não são HTML-encoded — são comparados como valor opaco (hash), nunca renderizados.
+const EXEMPT_BODY_FIELDS = new Set(["password", "newPassword", "resetToken"]);
+
+function sanitizeValue(value, exemptFields) {
   if (typeof value === "string") {
-    return value
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#x27;")
-      .replace(/\//g, "&#x2F;");
+    return escapeHtml(value);
   }
   if (Array.isArray(value)) {
-    return value.map(sanitizeValue);
+    return value.map((item) => sanitizeValue(item, exemptFields));
   }
   if (value !== null && typeof value === "object") {
-    return sanitizeObject(value);
+    return sanitizeObject(value, exemptFields);
   }
   return value;
 }
 
-function sanitizeObject(obj) {
+function sanitizeObject(obj, exemptFields) {
   const sanitized = {};
   for (const key of Object.keys(obj)) {
-    sanitized[key] = sanitizeValue(obj[key]);
+    sanitized[key] = exemptFields && exemptFields.has(key) ? obj[key] : sanitizeValue(obj[key], exemptFields);
   }
   return sanitized;
 }
 
 function xssSanitizer(req, res, next) {
   if (req.body && typeof req.body === "object") {
-    req.body = sanitizeObject(req.body);
+    req.body = sanitizeObject(req.body, EXEMPT_BODY_FIELDS);
   }
   if (req.query && typeof req.query === "object") {
-    req.query = sanitizeObject(req.query);
+    req.query = sanitizeObject(req.query, EXEMPT_BODY_FIELDS);
   }
   next();
 }

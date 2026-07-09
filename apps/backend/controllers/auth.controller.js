@@ -172,7 +172,7 @@ async function login(req, res) {
       });
     });
   } catch (err) {
-    console.error("Login error:", err.message);
+    console.error("Login error:", err.stack || err.message);
     res.status(500).json({
       success: false,
       error: "Internal server error",
@@ -271,7 +271,7 @@ async function requestPasswordReset(req, res) {
       }
     });
   } catch (err) {
-    console.error("Password reset request error:", err.message);
+    console.error("Password reset request error:", err.stack || err.message);
     res.status(500).json({
       success: false,
       error: "Internal server error",
@@ -351,7 +351,7 @@ async function verifyPasswordResetCode(req, res) {
       },
     });
   } catch (err) {
-    console.error("Password reset verify error:", err.message);
+    console.error("Password reset verify error:", err.stack || err.message);
     res.status(500).json({
       success: false,
       error: "Internal server error",
@@ -434,7 +434,7 @@ async function confirmPasswordReset(req, res) {
       },
     });
   } catch (err) {
-    console.error("Password reset confirm error:", err.message);
+    console.error("Password reset confirm error:", err.stack || err.message);
     res.status(500).json({
       success: false,
       error: "Internal server error",
@@ -507,7 +507,7 @@ async function me(req, res) {
       },
     });
   } catch (err) {
-    console.error("Session check error:", err.message);
+    console.error("Session check error:", err.stack || err.message);
     res.status(500).json({
       success: false,
       error: "Internal server error",

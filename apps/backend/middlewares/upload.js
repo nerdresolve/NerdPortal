@@ -16,12 +16,32 @@ const storage = multer.diskStorage({
   },
 });
 
-const uploadMiddleware = multer({
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+const upload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024,
+    fileSize: MAX_FILE_SIZE,
     files: 1,
   },
 });
+
+function uploadMiddleware(req, res, next) {
+  upload.single("file")(req, res, (err) => {
+    if (!err) return next();
+
+    if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({
+        success: false,
+        error: "File exceeds 10MB limit",
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      error: err.message || "Failed to process the uploaded file",
+    });
+  });
+}
 
 module.exports = uploadMiddleware;

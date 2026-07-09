@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require("uuid");
 
 async function findAll({ category, kpiName, limit, offset }) {
   const params = [limit || 50, offset || 0];
-  let where = "1=1";
+  let where = "m.deleted_at IS NULL";
 
   if (category) {
     params.push(category);
@@ -36,7 +36,7 @@ async function findById(id) {
             u.full_name AS created_by_name
      FROM metrics m
      LEFT JOIN users u ON u.id = m.created_by
-     WHERE m.id = $1`,
+     WHERE m.id = $1 AND m.deleted_at IS NULL`,
     [id]
   );
   return result.rows[0] || null;
@@ -59,7 +59,7 @@ async function update(id, { kpiValue, kpiUnit, notes }) {
      SET kpi_value = COALESCE($2, kpi_value),
          kpi_unit = COALESCE($3, kpi_unit),
          notes = COALESCE($4, notes)
-     WHERE id = $1
+     WHERE id = $1 AND deleted_at IS NULL
      RETURNING id, kpi_name, kpi_value, updated_at`,
     [id, kpiValue, kpiUnit, notes]
   );
@@ -70,7 +70,7 @@ async function getLatestByKpi(kpiName) {
   const result = await db.query(
     `SELECT id, kpi_name, kpi_value, kpi_unit, period_start, period_end, category
      FROM metrics
-     WHERE kpi_name = $1
+     WHERE kpi_name = $1 AND deleted_at IS NULL
      ORDER BY period_end DESC
      LIMIT 1`,
     [kpiName]
@@ -78,12 +78,12 @@ async function getLatestByKpi(kpiName) {
   return result.rows[0] || null;
 }
 
-async function remove(id) {
+async function softDelete(id) {
   const result = await db.query(
-    "DELETE FROM metrics WHERE id = $1 RETURNING id",
+    `UPDATE metrics SET deleted_at = datetime('now') WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
     [id]
   );
-  return result.rowCount > 0;
+  return result.rows[0] || null;
 }
 
-module.exports = { findAll, findById, create, update, getLatestByKpi, remove };
+module.exports = { findAll, findById, create, update, getLatestByKpi, softDelete };

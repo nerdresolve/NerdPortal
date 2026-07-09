@@ -11,33 +11,40 @@ const { DB_PATH } = requireBackend("./config/dbPath");
 
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || "12", 10);
 
-const ADMIN_EMAIL = "admin@example.com";
-const ADMIN_PASSWORD = process.env.ADMIN_SEED_PASSWORD || "Admin@ITPortal2026";
-const ADMIN_NAME = "Administrador TI";
+const USER_EMAIL = "admin@example.com";
+const USER_PASSWORD = process.env.ADMIN_SEED_PASSWORD;
+const USER_NAME = "IT Administrator";
+const USER_ROLE = "admin";
 
 async function seed() {
+  if (!USER_PASSWORD) {
+    console.log("ADMIN_SEED_PASSWORD not set. Skipping seed for %s.", USER_EMAIL);
+    return;
+  }
+
   const db = new Database(DB_PATH);
   db.pragma("foreign_keys = ON");
 
   try {
-    const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(ADMIN_EMAIL);
+    const hash = await bcrypt.hash(USER_PASSWORD, BCRYPT_ROUNDS);
+    const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(USER_EMAIL);
 
     if (existing) {
-      console.log("Admin user already exists. Skipping seed.");
+      db.prepare(
+        "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?"
+      ).run(hash, existing.id);
+      console.log("User already existed, password updated: %s", USER_EMAIL);
       return;
     }
 
-    const hash = await bcrypt.hash(ADMIN_PASSWORD, BCRYPT_ROUNDS);
     const id = uuidv4();
 
     db.prepare(
       `INSERT INTO users (id, email, password_hash, full_name, role)
-       VALUES (?, ?, ?, ?, 'admin')`
-    ).run(id, ADMIN_EMAIL, hash, ADMIN_NAME);
+       VALUES (?, ?, ?, ?, ?)`
+    ).run(id, USER_EMAIL, hash, USER_NAME, USER_ROLE);
 
-    console.log("Admin user created: %s", ADMIN_EMAIL);
-    console.log("Default password: %s", ADMIN_PASSWORD);
-    console.log("IMPORTANT: Change this password after first login.");
+    console.log("User created: %s", USER_EMAIL);
   } finally {
     db.close();
   }

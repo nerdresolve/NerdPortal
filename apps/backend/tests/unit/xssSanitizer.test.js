@@ -93,6 +93,50 @@ describe('XSS Sanitizer middleware', () => {
     });
   });
 
+  describe('exempts credential fields from sanitization (password/newPassword/resetToken)', () => {
+    test('leaves password untouched at the root of the body', () => {
+      const { req } = runMiddleware({ email: 'a@b.com', password: "p&a'ss/word\"" });
+      expect(req.body.password).toBe("p&a'ss/word\"");
+    });
+
+    test('leaves newPassword and resetToken untouched at the root of the body', () => {
+      const { req } = runMiddleware({
+        newPassword: 'Bra&vante@2026*',
+        resetToken: "token'with/special&chars\"",
+      });
+      expect(req.body.newPassword).toBe('Bra&vante@2026*');
+      expect(req.body.resetToken).toBe("token'with/special&chars\"");
+    });
+
+    test('still sanitizes non-exempt fields alongside an exempt one', () => {
+      const { req } = runMiddleware({ password: 'p&ss', title: '<b>x</b>' });
+      expect(req.body.password).toBe('p&ss');
+      expect(req.body.title).toBe('&lt;b&gt;x&lt;&#x2F;b&gt;');
+    });
+
+    test('leaves password untouched when nested inside another object', () => {
+      const { req } = runMiddleware({ auth: { password: 'p&a/ss' } });
+      expect(req.body.auth.password).toBe('p&a/ss');
+    });
+
+    test('leaves password untouched when nested inside an array of objects', () => {
+      const { req } = runMiddleware({ entries: [{ password: "p'&ss" }, { title: '<i>y</i>' }] });
+      expect(req.body.entries[0].password).toBe("p'&ss");
+      expect(req.body.entries[1].title).toBe('&lt;i&gt;y&lt;&#x2F;i&gt;');
+    });
+
+    test('leaves resetToken untouched in query parameters', () => {
+      const { req } = runMiddleware({}, { resetToken: "tok&en'with/chars" });
+      expect(req.query.resetToken).toBe("tok&en'with/chars");
+    });
+
+    test('still sanitizes non-exempt query parameters', () => {
+      const { req } = runMiddleware({}, { search: '<script>', password: 'p&ss' });
+      expect(req.query.search).toBe('&lt;script&gt;');
+      expect(req.query.password).toBe('p&ss');
+    });
+  });
+
   describe('middleware contract', () => {
     test('calls next()', () => {
       const { called } = runMiddleware({ safe: 'text' });

@@ -1,25 +1,18 @@
 const fs = require("fs");
-const path = require("path");
 const teamDal = require("../dal/team.dal");
-const { ensureUploadSubdir, resolveUploadPath, isPathWithinUploads } = require("../services/uploads");
-
-const TEAM_PHOTOS_DIR = ensureUploadSubdir("team");
-const MANAGED_PHOTO_PATTERN = /^\/api\/team\/photos\/([a-f0-9]{48}\.(?:jpg|png|webp|gif))$/;
-
-function sanitizeValue(value) {
-  if (typeof value !== "string") return value;
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;")
-    .replace(/\//g, "&#x2F;")
-    .trim();
-}
+const { escapeHtml } = require("../utils/sanitize");
+const {
+  buildManagedPhotoUrl,
+  isValidPhotoFilename,
+  resolvePhotoPath,
+  isWithinTeamPhotosDir,
+  removeFileAtPath,
+  removeManagedPhoto,
+} = require("../services/teamPhotos");
 
 function normalizeOptionalString(value) {
-  const sanitized = sanitizeValue(value);
+  if (typeof value !== "string") return null;
+  const sanitized = escapeHtml(value).trim();
   return sanitized ? sanitized : null;
 }
 
@@ -33,32 +26,6 @@ function normalizeSortOrder(value) {
   const parsed = parseInt(value, 10);
   if (!Number.isFinite(parsed)) return undefined;
   return Math.max(parsed, 0);
-}
-
-function buildManagedPhotoUrl(filename) {
-  return `/api/team/photos/${filename}`;
-}
-
-function extractManagedPhotoFilename(photoUrl) {
-  if (typeof photoUrl !== "string") return null;
-  const match = photoUrl.match(MANAGED_PHOTO_PATTERN);
-  return match ? match[1] : null;
-}
-
-function removeFileAtPath(filePath) {
-  if (!filePath || !isPathWithinUploads(filePath) || !fs.existsSync(filePath)) return;
-  fs.unlink(filePath, (err) => {
-    if (err) console.error("Team photo cleanup error:", err.message);
-  });
-}
-
-function removeManagedPhoto(photoUrl) {
-  const filename = extractManagedPhotoFilename(photoUrl);
-  if (!filename) return;
-
-  const absolutePath = resolveUploadPath("team", filename);
-  if (!absolutePath.startsWith(TEAM_PHOTOS_DIR + path.sep) && absolutePath !== TEAM_PHOTOS_DIR) return;
-  removeFileAtPath(absolutePath);
 }
 
 function getTeamPayload(body, file) {
@@ -85,7 +52,7 @@ async function list(req, res) {
     const items = await teamDal.findAll({ activeOnly, limit, offset });
     res.status(200).json({ success: true, data: { items } });
   } catch (err) {
-    console.error("Team list error:", err.message);
+    console.error("Team list error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -98,7 +65,7 @@ async function getById(req, res) {
     }
     res.status(200).json({ success: true, data: item });
   } catch (err) {
-    console.error("Team get error:", err.message);
+    console.error("Team get error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -106,12 +73,12 @@ async function getById(req, res) {
 async function servePhoto(req, res) {
   const filename = req.params.filename;
 
-  if (!/^[a-f0-9]{48}\.(jpg|png|webp|gif)$/.test(filename)) {
+  if (!isValidPhotoFilename(filename)) {
     return res.status(404).json({ success: false, error: "Photo not found" });
   }
 
-  const filePath = resolveUploadPath("team", filename);
-  if (!filePath.startsWith(TEAM_PHOTOS_DIR + path.sep) && filePath !== TEAM_PHOTOS_DIR) {
+  const filePath = resolvePhotoPath(filename);
+  if (!isWithinTeamPhotosDir(filePath)) {
     return res.status(403).json({ success: false, error: "Access denied" });
   }
 
@@ -140,7 +107,7 @@ async function create(req, res) {
     res.status(201).json({ success: true, data: item });
   } catch (err) {
     removeFileAtPath(req.file?.path);
-    console.error("Team create error:", err.message);
+    console.error("Team create error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -168,7 +135,7 @@ async function update(req, res) {
     res.status(200).json({ success: true, data: item });
   } catch (err) {
     removeFileAtPath(req.file?.path);
-    console.error("Team update error:", err.message);
+    console.error("Team update error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -188,7 +155,7 @@ async function remove(req, res) {
     removeManagedPhoto(existing.photo_url);
     res.status(200).json({ success: true, data: { message: "Team member deleted" } });
   } catch (err) {
-    console.error("Team delete error:", err.message);
+    console.error("Team delete error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }

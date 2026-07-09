@@ -88,3 +88,4 @@ function sessionMiddleware() {
 }
 
 module.exports = sessionMiddleware;
+module.exports.SQLiteSessionStore = SQLiteSessionStore;

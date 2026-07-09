@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { isAdminUser } from "../../services/auth";
+import { logout } from "../../services/api";
 import styles from "./Header.module.css";
 
 export default function Header({ user }) {
@@ -8,8 +9,7 @@ export default function Header({ user }) {
   const isAdmin = isAdminUser(user);
 
   async function handleLogout() {
-    const api = require("../../services/api");
-    await api.logout();
+    await logout();
     router.push("/");
   }
 

@@ -32,9 +32,8 @@ Plataforma institucional do NerdResolve para centralização de comunicação, d
 | Git            | 2.40+         | Controle de versão                                |
 | Node.js        | 20.0+         | Runtime (somente para execução manual sem Docker) |
 | npm            | 10.0+         | Gerenciador de pacotes (incluso no Node.js)       |
-| PostgreSQL     | 16.0+         | Banco de dados (somente para execução sem Docker) |
 
-> Para implantação via Docker (recomendada), apenas **Docker**, **Docker Compose** e **Git** são necessários. Node.js e PostgreSQL são providos pelos containers.
+> Para implantação via Docker (recomendada), apenas **Docker**, **Docker Compose** e **Git** são necessários. Node.js é provido pelos containers. O banco de dados é **SQLite** (arquivo embarcado, sem servidor separado) — persistido em um volume Docker.
 
 ---
 
@@ -110,26 +109,6 @@ Baixe o instalador LTS em https://nodejs.org/ (versão 20.x ou superior).
 
 ---
 
-### 2.4 PostgreSQL 16 (somente para execução manual)
-
-**Ubuntu/Debian:**
-```bash
-sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-sudo apt update && sudo apt install postgresql-16 -y
-psql --version
-```
-
-**macOS:**
-```bash
-brew install postgresql@16 && brew services start postgresql@16
-```
-
-**Windows:**
-Baixe o instalador em https://www.postgresql.org/download/windows/. Durante a instalação, defina a senha do usuário `postgres` e adicione o diretório `bin` ao PATH do sistema.
-
----
-
 ## 3. Obtendo o Repositório
 
 ```bash
@@ -150,9 +129,6 @@ cp .env.example .env
 Abra o `.env` em um editor de texto e configure:
 
 ```env
-# OBRIGATÓRIO — Senha forte para o banco de dados
-POSTGRES_PASSWORD=sua_senha_segura_aqui
-
 # OBRIGATÓRIO — String aleatória de no mínimo 64 caracteres
 # Linux/macOS: openssl rand -hex 32
 SESSION_SECRET=cole_aqui_a_string_gerada
@@ -208,12 +184,14 @@ docker compose --env-file ../.env up --build
 ```
 
 Na primeira execução, o Docker irá:
-1. Baixar as imagens base (`postgres:16-alpine`, `node:20-alpine`).
+1. Baixar a imagem base (`node:20-alpine`).
 2. Construir os containers do backend e frontend.
 3. Instalar dependências via `npm ci`.
-4. Iniciar o PostgreSQL (aguarda health check de até 30 s).
-5. Iniciar o backend na porta 4000 após o banco estar saudável.
-6. Iniciar o frontend na porta 3000 após o backend estar disponível.
+4. Rodar o container `migrate` (aplica as migrações SQLite e cria o usuário administrador padrão).
+5. Iniciar o backend na porta 4000 após a migração concluir com sucesso.
+6. Iniciar o frontend na porta 3000 após o backend responder saudável (`/api/v1/health`).
+
+O banco SQLite (`itportal.db`) e a pasta de uploads são persistidos em volumes Docker nomeados (`dbdata`, `uploads`) — os dados sobrevivem a `docker compose down` e a rebuilds das imagens.
 
 Para executar em segundo plano (modo daemon):
 
@@ -231,10 +209,11 @@ Saída esperada:
 
 ```
 NAME                 STATUS
-itportal_db          Up (healthy)
-itportal_backend     Up
+itportal_backend     Up (healthy)
 itportal_frontend    Up
 ```
+
+> O container `itportal_migrate` aparece como `Exited (0)` — ele roda uma vez (migração + seed) e encerra, isso é esperado.
 
 ### 5.3 Acompanhar logs
 
@@ -245,8 +224,8 @@ docker compose logs -f
 # Apenas o backend
 docker compose logs -f backend
 
-# Apenas o banco de dados
-docker compose logs -f db
+# Apenas a migração/seed
+docker compose logs migrate
 ```
 
 ### 5.4 Parar os serviços
@@ -263,39 +242,16 @@ docker compose down -v
 
 ## 6. Execução Manual (Sem Docker)
 
-Certifique-se de que Node.js 20+ e PostgreSQL 16+ estejam instalados.
+Certifique-se de que Node.js 20+ esteja instalado. O banco de dados é SQLite (arquivo local) — nenhuma instalação de servidor de banco é necessária.
 
-### 6.1 Configurar o banco de dados
-
-```bash
-sudo -u postgres psql
-```
-
-Execute os seguintes comandos SQL:
-
-```sql
-CREATE USER itportal_user WITH PASSWORD 'sua_senha_aqui';
-CREATE DATABASE itportal OWNER itportal_user;
-GRANT ALL PRIVILEGES ON DATABASE itportal TO itportal_user;
-\q
-```
-
-### 6.2 Ajustar variável de host
-
-No arquivo `.env`, altere `POSTGRES_HOST` para `localhost`:
-
-```env
-POSTGRES_HOST=localhost
-```
-
-### 6.3 Instalar dependências
+### 6.1 Instalar dependências
 
 ```bash
 cd apps/backend && npm install && cd ../..
 cd apps/frontend && npm install && cd ../..
 ```
 
-### 6.4 Iniciar o backend
+### 6.2 Iniciar o backend
 
 ```bash
 cd apps/backend
@@ -316,7 +272,7 @@ npm run dev
 
 O backend estará disponível em `http://localhost:4000`.
 
-### 6.5 Iniciar o frontend
+### 6.3 Iniciar o frontend
 
 Em outro terminal:
 
@@ -332,7 +288,7 @@ O frontend estará disponível em `http://localhost:3000`.
 
 ## 7. Migração do Banco de Dados
 
-As migrações criam todas as tabelas necessárias. **Obrigatório antes do primeiro uso.**
+As migrações criam todas as tabelas necessárias. Com Docker, o serviço `migrate` já executa isso **automaticamente** a cada `docker compose up` (é idempotente — seguro rodar mais de uma vez). Os comandos abaixo são para reexecutar manualmente ou para o modo sem Docker.
 
 ### 7.1 Via Docker
 
@@ -345,7 +301,6 @@ docker compose exec backend node database/migrate.js
 ```bash
 cd apps/backend
 export $(grep -v '^#' ../../.env | xargs)
-export POSTGRES_HOST=localhost
 npm run migrate
 ```
 
@@ -372,10 +327,12 @@ Migrations complete. Applied: 10, Skipped: 0
 
 ## 8. Criação do Usuário Administrador
 
+Com Docker, o serviço `migrate` já cria o usuário administrador padrão automaticamente (o seed detecta se ele já existe e pula caso já tenha sido criado). Os comandos abaixo são para reexecutar manualmente ou para o modo sem Docker.
+
 ### 8.1 Via Docker
 
 ```bash
-docker compose exec backend node /database/seeds/001_admin_user.js
+docker compose run --rm migrate
 ```
 
 ### 8.2 Via execução manual
@@ -383,7 +340,6 @@ docker compose exec backend node /database/seeds/001_admin_user.js
 ```bash
 cd database/seeds
 export $(grep -v '^#' ../../.env | xargs)
-export POSTGRES_HOST=localhost
 node 001_admin_user.js
 ```
 
@@ -427,7 +383,6 @@ node 001_admin_user.js
 | Frontend   | http://localhost:3000               |
 | Backend    | http://localhost:4000               |
 | API Health | http://localhost:4000/api/v1/health |
-| PostgreSQL | localhost:5432                      |
 
 **Verificação rápida da API:**
 
@@ -463,7 +418,7 @@ nerdportal/
         systems.controller.js
         team.controller.js
       dal/                        Data Access Layer (SQL parametrizado)
-        db.js                     Pool de conexões PostgreSQL
+        db.js                     Conexão SQLite (better-sqlite3)
         users.dal.js
         audit.dal.js
         announcements.dal.js
@@ -477,7 +432,7 @@ nerdportal/
         cors.js                   CORS com whitelist de origens
         csrf.js                   Double-submit cookie + timingSafeEqual
         rateLimit.js              10 req/15min auth, 100 req/min API geral
-        session.js                PostgreSQL session store
+        session.js                SQLite session store
         auth.js                   requireAuth, requireRole
         xssSanitizer.js           Sanitização recursiva de inputs
         audit.js                  Log automático de mutações
@@ -489,7 +444,8 @@ nerdportal/
       database/
         migrate.js                Runner de migrações SQL
       tests/                      Suite de testes automatizados (Jest + Supertest)
-      Dockerfile
+      Dockerfile                   Build multi-stage de produção
+      docker-entrypoint.sh         Ajusta permissões dos volumes e roda como usuário non-root
       package.json
 
     frontend/                     Interface web (Next.js 14 / SSR)
@@ -524,18 +480,14 @@ nerdportal/
     seeds/                        Seed do usuário administrador inicial
 
   docker/
-    docker-compose.yml            Orquestração (db + backend + frontend)
+    docker-compose.yml            Orquestração (migrate + backend + frontend)
 
-  docs/
-    technical-reference.md        Documentação técnica e decisões de arquitetura
-    security_audit_report.md      Relatório de auditoria de segurança
-    security_audit.sh             Script de auditoria automatizada
-    progress.txt                  Checklist de progresso de implementação
-
-  uploads/                        Persistência de uploads no host (via Docker volume)
+  .dockerignore                   Exclusões do build context do backend (raiz do monorepo)
   .env.example                    Template de variáveis de ambiente
   .gitignore
 ```
+
+> O banco SQLite (`itportal.db`) e a pasta `uploads/` são persistidos em volumes Docker nomeados (`dbdata`, `uploads`), não em diretórios do host — use `docker compose down -v` para removê-los.
 
 ---
 
@@ -633,8 +585,8 @@ O frontend renderiza controles de edição condicionalmente: apenas quando o usu
 | Medida                    | Implementação                                                          |
 |---------------------------|------------------------------------------------------------------------|
 | Hash de senha             | bcrypt com fator de custo 12                                           |
-| Gerenciamento de sessão   | Cookies HttpOnly, SameSite=Strict, armazenados no PostgreSQL           |
-| Prevenção de SQL Injection | Queries 100% parametrizadas via biblioteca `pg` — nenhuma concatenação |
+| Gerenciamento de sessão   | Cookies HttpOnly, SameSite=Strict, armazenados no SQLite               |
+| Prevenção de SQL Injection | Queries 100% parametrizadas via `better-sqlite3` — nenhuma concatenação |
 | Proteção contra XSS       | Middleware de sanitização recursiva + CSP via Helmet.js                |
 | Proteção contra CSRF      | Double-submit cookie com `crypto.timingSafeEqual`                      |
 | Headers de segurança      | Helmet.js (CSP, HSTS 1 ano, X-Frame-Options DENY, X-Content-Type-Options) |
@@ -643,17 +595,12 @@ O frontend renderiza controles de edição condicionalmente: apenas quando o usu
 | Upload de arquivos        | Allowlist de MIME types, nomes aleatórios criptograficamente seguros, validação de tamanho |
 | Sessão única admin        | Novo login administrativo invalida sessões admin preexistentes          |
 
-O relatório completo da auditoria de segurança está em `docs/security_audit_report.md`.
-
 ---
 
 ## 13. Resolução de Problemas
 
-**Backend não conecta ao banco de dados**
-Verifique se o PostgreSQL está em execução. Confirme que `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER` e `POSTGRES_PASSWORD` estão corretos no `.env`. Com Docker, o host deve ser `db`; sem Docker, deve ser `localhost`.
-
-**Erro `POSTGRES_PASSWORD must be set`**
-O arquivo `.env` não foi configurado ou não está sendo carregado. Verifique se `.env` existe na raiz do projeto com `POSTGRES_PASSWORD` preenchido.
+**Backend não inicia / não encontra o banco de dados**
+Confirme que o container `migrate` rodou com sucesso (`docker compose logs migrate`) antes do `backend` subir — o backend depende de `service_completed_successfully` do `migrate`. Sem Docker, confirme que `SQLITE_DB_PATH` aponta para um caminho gravável e que `npm run migrate` foi executado ao menos uma vez.
 
 **Erro `SESSION_SECRET must be set`**
 Preencha `SESSION_SECRET` no `.env` com uma string aleatória de pelo menos 64 caracteres. Gere com `openssl rand -hex 32`.
@@ -661,14 +608,14 @@ Preencha `SESSION_SECRET` no `.env` com uma string aleatória de pelo menos 64 c
 **Porta 3000 ou 4000 já em uso**
 Altere `FRONTEND_PORT` ou `BACKEND_PORT` no `.env`. Com Docker, execute `docker compose down` antes de reiniciar.
 
-**Migrações falham com `relation already exists`**
+**Migrações falham com `table already exists`**
 As migrações já foram aplicadas. O runner é idempotente e ignora migrações já executadas. Se o erro persistir, verifique a tabela `_migrations` no banco.
 
 **Frontend retorna 401 em todas as páginas**
 O backend pode não estar acessível. Verifique se está rodando na porta 4000 e se `NEXT_PUBLIC_API_URL` e `INTERNAL_API_URL` estão corretos no `.env`.
 
-**bcrypt falha na instalação (erro de compilação)**
-O bcrypt requer ferramentas de compilação nativas.
+**better-sqlite3 falha na instalação (erro de compilação)**
+`better-sqlite3` requer ferramentas de compilação nativas ao instalar via `npm install` fora do Docker (dentro do Docker, o Dockerfile já instala `python3 make g++`).
 - Linux: `sudo apt install build-essential python3`
 - macOS: `xcode-select --install`
 - Windows: instale as Build Tools do Visual Studio

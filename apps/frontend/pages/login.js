@@ -5,8 +5,6 @@ import Head from "next/head";
 import { login, getMe } from "../services/api";
 import styles from "../styles/Login.module.css";
 
-const INTERNAL_API = process.env.INTERNAL_API_URL || "http://backend:4000/api/v1";
-
 export async function getServerSideProps(context) {
   const cookie = context.req.headers.cookie || "";
 
@@ -14,14 +12,6 @@ export async function getServerSideProps(context) {
     const result = await getMe(cookie);
     if (result.success && result.data) {
       return { redirect: { destination: "/", permanent: false } };
-    }
-  } catch (e) {
-  }
-  try {
-    const res = await fetch(`${INTERNAL_API}/auth/me`);
-    const setCookie = res.headers.get("set-cookie");
-    if (setCookie) {
-      context.res.setHeader("Set-Cookie", setCookie);
     }
   } catch (e) {
   }

@@ -55,6 +55,8 @@ async function update(id, {
   isActive,
   sortOrder,
 }) {
+  // photo_url não usa COALESCE (precisa aceitar NULL explícito ao remover foto);
+  // photoUrlProvided sinaliza a intenção.
   const result = await db.query(
     `UPDATE team_members
      SET full_name = COALESCE($2, full_name),
@@ -79,7 +81,7 @@ async function softDelete(id) {
     `UPDATE team_members SET deleted_at = datetime('now') WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
     [id]
   );
-  return result.rowCount > 0;
+  return result.rows[0] || null;
 }
 
 module.exports = { findAll, findById, create, update, softDelete };

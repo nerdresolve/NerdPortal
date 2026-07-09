@@ -10,7 +10,7 @@ async function list(req, res) {
     const items = await systemsDal.findAll({ status, category, limit, offset });
     res.status(200).json({ success: true, data: { items } });
   } catch (err) {
-    console.error("Systems list error:", err.message);
+    console.error("Systems list error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -23,7 +23,7 @@ async function getById(req, res) {
     }
     res.status(200).json({ success: true, data: item });
   } catch (err) {
-    console.error("System get error:", err.message);
+    console.error("System get error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -39,7 +39,7 @@ async function create(req, res) {
     const item = await systemsDal.create({ name, url, description, status, category, ownerId });
     res.status(201).json({ success: true, data: item });
   } catch (err) {
-    console.error("System create error:", err.message);
+    console.error("System create error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -54,7 +54,7 @@ async function update(req, res) {
     }
     res.status(200).json({ success: true, data: item });
   } catch (err) {
-    console.error("System update error:", err.message);
+    console.error("System update error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -67,7 +67,7 @@ async function remove(req, res) {
     }
     res.status(200).json({ success: true, data: { message: "System deleted" } });
   } catch (err) {
-    console.error("System delete error:", err.message);
+    console.error("System delete error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }

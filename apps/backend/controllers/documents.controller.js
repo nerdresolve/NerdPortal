@@ -1,7 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 const documentsDal = require("../dal/documents.dal");
-const { UPLOADS_DIR, ensureUploadsDir } = require("../services/uploads");
+const { ensureUploadsDir, resolveUploadPath, isPathWithinUploads } = require("../services/uploads");
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -39,7 +39,7 @@ async function list(req, res) {
       data: { items, total, limit, offset },
     });
   } catch (err) {
-    console.error("Documents list error:", err.message);
+    console.error("Documents list error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -52,7 +52,7 @@ async function getById(req, res) {
     }
     res.status(200).json({ success: true, data: item });
   } catch (err) {
-    console.error("Document get error:", err.message);
+    console.error("Document get error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -89,7 +89,7 @@ async function upload(req, res) {
 
     res.status(201).json({ success: true, data: item });
   } catch (err) {
-    console.error("Document upload error:", err.message);
+    console.error("Document upload error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -101,9 +101,9 @@ async function download(req, res) {
       return res.status(404).json({ success: false, error: "Document not found" });
     }
 
-    const filePath = path.join(UPLOADS_DIR, item.stored_name);
+    const filePath = resolveUploadPath(item.stored_name);
 
-    if (!filePath.startsWith(UPLOADS_DIR)) {
+    if (!isPathWithinUploads(filePath)) {
       return res.status(403).json({ success: false, error: "Access denied" });
     }
 
@@ -115,7 +115,7 @@ async function download(req, res) {
     res.setHeader("Content-Type", item.mime_type);
     res.sendFile(filePath);
   } catch (err) {
-    console.error("Document download error:", err.message);
+    console.error("Document download error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -127,8 +127,8 @@ async function remove(req, res) {
       return res.status(404).json({ success: false, error: "Document not found" });
     }
 
-    const filePath = path.join(UPLOADS_DIR, item.stored_name);
-    if (filePath.startsWith(UPLOADS_DIR) && fs.existsSync(filePath)) {
+    const filePath = resolveUploadPath(item.stored_name);
+    if (isPathWithinUploads(filePath) && fs.existsSync(filePath)) {
       fs.unlink(filePath, (err) => {
         if (err) console.error("File removal failed:", err.message);
       });
@@ -136,7 +136,7 @@ async function remove(req, res) {
 
     res.status(200).json({ success: true, data: { message: "Document deleted" } });
   } catch (err) {
-    console.error("Document delete error:", err.message);
+    console.error("Document delete error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }

@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+.next
+**/.next
+.env
+.env.local
+*.db
+*.db-shm
+*.db-wal
+uploads
+apps/backend/uploads
+apps/backend/tests
+.git
+docs
+docker

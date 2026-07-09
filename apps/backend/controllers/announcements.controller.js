@@ -15,7 +15,7 @@ async function list(req, res) {
       data: { items, total, limit, offset },
     });
   } catch (err) {
-    console.error("Announcements list error:", err.message);
+    console.error("Announcements list error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -28,7 +28,7 @@ async function getById(req, res) {
     }
     res.status(200).json({ success: true, data: item });
   } catch (err) {
-    console.error("Announcement get error:", err.message);
+    console.error("Announcement get error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -51,7 +51,7 @@ async function create(req, res) {
 
     res.status(201).json({ success: true, data: item });
   } catch (err) {
-    console.error("Announcement create error:", err.message);
+    console.error("Announcement create error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -72,7 +72,7 @@ async function update(req, res) {
     }
     res.status(200).json({ success: true, data: item });
   } catch (err) {
-    console.error("Announcement update error:", err.message);
+    console.error("Announcement update error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -85,7 +85,7 @@ async function remove(req, res) {
     }
     res.status(200).json({ success: true, data: { message: "Announcement deleted" } });
   } catch (err) {
-    console.error("Announcement delete error:", err.message);
+    console.error("Announcement delete error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }

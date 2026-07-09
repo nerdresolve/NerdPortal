@@ -1,54 +1,68 @@
-version: "3.9"
-
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: itportal_db
-    restart: unless-stopped
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+  migrate:
+    build:
+      context: ..
+      dockerfile: apps/backend/Dockerfile
+    container_name: itportal_migrate
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-itportal}
-      POSTGRES_USER: ${POSTGRES_USER:-itportal_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      SQLITE_DB_PATH: /data/itportal.db
+      BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
     volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ../database/migrations:/docker-entrypoint-initdb.d/migrations:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-itportal_user} -d ${POSTGRES_DB:-itportal}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      - dbdata:/data
+    entrypoint: ["./docker-entrypoint.sh", "sh", "-c"]
+    command:
+      - |
+        node database/migrate.js &&
+        node /repo/database/seeds/001_admin_user.js &&
+        node /repo/database/seeds/002_admin_user_user.js
     networks:
       - itportal_net
 
   backend:
     build:
-      context: ../apps/backend
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: apps/backend/Dockerfile
     container_name: itportal_backend
     restart: unless-stopped
     ports:
       - "${BACKEND_PORT:-4000}:4000"
     environment:
-      NODE_ENV: ${NODE_ENV:-development}
+      NODE_ENV: ${NODE_ENV:-production}
       BACKEND_PORT: 4000
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: ${POSTGRES_DB:-itportal}
-      POSTGRES_USER: ${POSTGRES_USER:-itportal_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      SQLITE_DB_PATH: /data/itportal.db
+      UPLOADS_DIR: /repo/apps/backend/uploads
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET must be set}
       BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
+      PASSWORD_RESET_CODE_TTL_MINUTES: ${PASSWORD_RESET_CODE_TTL_MINUTES:-15}
+      PASSWORD_RESET_TOKEN_TTL_MINUTES: ${PASSWORD_RESET_TOKEN_TTL_MINUTES:-15}
+      PASSWORD_RESET_MAX_ATTEMPTS: ${PASSWORD_RESET_MAX_ATTEMPTS:-5}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_REQUIRE_TLS: ${SMTP_REQUIRE_TLS:-true}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Portal do TI}
+      SMTP_AUTH_METHOD: ${SMTP_AUTH_METHOD:-LOGIN}
+      SMTP_HELO_NAME: ${SMTP_HELO_NAME:-}
+      SMTP_TIMEOUT_MS: ${SMTP_TIMEOUT_MS:-10000}
     volumes:
-      - ../apps/backend:/app
-      - ../database:/database:ro
-      - /app/node_modules
-      - ../uploads:/app/uploads
+      - dbdata:/data
+      - uploads:/repo/apps/backend/uploads
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/api/v1/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - itportal_net
 
@@ -56,25 +70,26 @@ services:
     build:
       context: ../apps/frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api/v1}
     container_name: itportal_frontend
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
-      NODE_ENV: ${NODE_ENV:-development}
+      NODE_ENV: ${NODE_ENV:-production}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api/v1}
       INTERNAL_API_URL: http://backend:4000/api/v1
-    volumes:
-      - ../apps/frontend:/app
-      - /app/node_modules
-      - /app/.next
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - itportal_net
 
 volumes:
-  pgdata:
+  dbdata:
+    driver: local
+  uploads:
     driver: local
 
 networks:

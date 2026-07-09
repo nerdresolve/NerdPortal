@@ -1,7 +1,5 @@
 const Database = require("better-sqlite3");
-const path = require("path");
-
-const DB_PATH = process.env.SQLITE_DB_PATH || path.join(__dirname, "../../../itportal.db");
+const { DB_PATH } = require("../config/dbPath");
 
 const db = new Database(DB_PATH);
 
@@ -62,4 +60,8 @@ function healthCheck() {
   return Promise.resolve(row);
 }
 
-module.exports = { db, query, getClient, healthCheck };
+function getDb() {
+  return db;
+}
+
+module.exports = { db, query, getClient, healthCheck, getDb };

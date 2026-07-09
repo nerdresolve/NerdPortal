@@ -10,7 +10,7 @@ async function list(req, res) {
     const items = await metricsDal.findAll({ category, kpiName, limit, offset });
     res.status(200).json({ success: true, data: { items } });
   } catch (err) {
-    console.error("Metrics list error:", err.message);
+    console.error("Metrics list error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -23,7 +23,7 @@ async function getById(req, res) {
     }
     res.status(200).json({ success: true, data: item });
   } catch (err) {
-    console.error("Metric get error:", err.message);
+    console.error("Metric get error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -51,7 +51,7 @@ async function create(req, res) {
     });
     res.status(201).json({ success: true, data: item });
   } catch (err) {
-    console.error("Metric create error:", err.message);
+    console.error("Metric create error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
@@ -66,20 +66,20 @@ async function update(req, res) {
     }
     res.status(200).json({ success: true, data: item });
   } catch (err) {
-    console.error("Metric update error:", err.message);
+    console.error("Metric update error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
 
 async function remove(req, res) {
   try {
-    const deleted = await metricsDal.remove(req.params.id);
+    const deleted = await metricsDal.softDelete(req.params.id);
     if (!deleted) {
       return res.status(404).json({ success: false, error: "Metric not found" });
     }
     res.status(200).json({ success: true, data: { message: "Metric deleted" } });
   } catch (err) {
-    console.error("Metric delete error:", err.message);
+    console.error("Metric delete error:", err.stack || err.message);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 }

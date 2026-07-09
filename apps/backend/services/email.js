@@ -2,6 +2,7 @@ const net = require("net");
 const tls = require("tls");
 const os = require("os");
 const crypto = require("crypto");
+const { escapeHtml } = require("../utils/sanitize");
 
 function parseBoolean(value, defaultValue) {
   if (value === undefined || value === null || value === "") return defaultValue;
@@ -186,15 +187,6 @@ function encodeHeaderValue(value) {
 function formatAddress(name, email) {
   if (!name) return `<${email}>`;
   return `${encodeHeaderValue(name)} <${email}>`;
-}
-
-function escapeHtml(value) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
 
 function buildMessage({ fromName, fromEmail, to, subject, text, html }) {

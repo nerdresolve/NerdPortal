@@ -10,8 +10,6 @@ uploads/*
 !uploads/.gitkeep
 apps/backend/uploads/*
 !apps/backend/uploads/.gitkeep
-pgdata/
 dist/
 .DS_Store
-.codex
 .claude/

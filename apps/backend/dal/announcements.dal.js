@@ -59,7 +59,7 @@ async function softDelete(id) {
     `UPDATE announcements SET deleted_at = datetime('now') WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
     [id]
   );
-  return result.rowCount > 0;
+  return result.rows[0] || null;
 }
 
 async function count() {

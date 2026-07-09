@@ -2,10 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const Database = require("better-sqlite3");
 const { v4: uuidv4 } = require("uuid");
-
-const DB_PATH =
-  process.env.SQLITE_DB_PATH ||
-  path.resolve(__dirname, "../../../database/itportal.db");
+const { DB_PATH } = require("../config/dbPath");
 
 const MIGRATIONS_DIR = path.resolve(__dirname, "../../../database/migrations");
 
