@@ -133,6 +133,12 @@ Abra o `.env` em um editor de texto e configure:
 # Linux/macOS: openssl rand -hex 32
 SESSION_SECRET=cole_aqui_a_string_gerada
 
+# OPCIONAL — sobrescreve a senha do admin padrão (admin@example.com)
+ADMIN_SEED_PASSWORD=
+
+# OPCIONAL — cria admin@example.com; se vazio, o seed é pulado
+ADMIN_SEED_PASSWORD=
+
 # OBRIGATÓRIO PARA RECUPERAÇÃO DE SENHA VIA E-MAIL
 SMTP_HOST=smtp.seuprovedor.com
 SMTP_PORT=587
@@ -325,33 +331,50 @@ Migrations complete. Applied: 10, Skipped: 0
 
 ---
 
-## 8. Criação do Usuário Administrador
+## 8. Criação de Usuários Administrativos
 
-Com Docker, o serviço `migrate` já cria o usuário administrador padrão automaticamente (o seed detecta se ele já existe e pula caso já tenha sido criado). Os comandos abaixo são para reexecutar manualmente ou para o modo sem Docker.
+Com Docker, o serviço `migrate` já cria os usuários administrativos automaticamente a cada `docker compose up` (os seeds detectam se o usuário já existe e pulam ou atualizam a senha, conforme o caso). Os comandos abaixo são para reexecutar manualmente ou para o modo sem Docker.
 
-### 8.1 Via Docker
+### 8.1 Administrador padrão
 
+Criado sempre, sem configuração adicional. A senha pode ser customizada via `ADMIN_SEED_PASSWORD` no `.env`; se omitida, usa o valor padrão abaixo.
+
+| Campo | Valor                              |
+|-------|-------------------------------------|
+| Email | admin@example.com               |
+| Senha | `ADMIN_SEED_PASSWORD` ou `Admin@ITPortal2026` (padrão) |
+| Papel | admin                                |
+
+> **IMPORTANTE:** Altere a senha padrão imediatamente após o primeiro login.
+
+### 8.2 Usuário adicional (admin@example.com)
+
+Este seed só é executado se a variável `ADMIN_SEED_PASSWORD` estiver definida no `.env` — sem ela, é pulado silenciosamente e nenhuma conta é criada. Não há senha padrão embutida no código.
+
+```env
+ADMIN_SEED_PASSWORD=defina_uma_senha_forte_aqui
+```
+
+| Campo | Valor                              |
+|-------|-------------------------------------|
+| Email | admin@example.com       |
+| Senha | `ADMIN_SEED_PASSWORD` (obrigatória) |
+| Papel | admin                                |
+
+### 8.3 Reexecutar os seeds manualmente
+
+**Via Docker:**
 ```bash
 docker compose run --rm migrate
 ```
 
-### 8.2 Via execução manual
-
+**Via execução manual:**
 ```bash
 cd database/seeds
 export $(grep -v '^#' ../../.env | xargs)
 node 001_admin_user.js
+node 002_admin_user_user.js
 ```
-
-**Credenciais padrão:**
-
-| Campo | Valor                  |
-|-------|------------------------|
-| Email | admin@example.com  |
-| Senha | Admin@ITPortal2026     |
-| Papel | admin                  |
-
-> **IMPORTANTE:** Altere a senha padrão imediatamente após o primeiro login.
 
 ---
 
