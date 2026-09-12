@@ -10,7 +10,7 @@ import {
   deleteTeamMember,
   resolveApiAssetUrl,
 } from "../services/api";
-import styles from "../styles/Equipe.module.css";
+import styles from "../styles/Team.module.css";
 
 const ALLOWED_PHOTO_TYPES = new Set([
   "image/jpeg",
@@ -32,9 +32,9 @@ export async function getServerSideProps(context) {
     const activeParam = isAdminUser(user) ? "false" : "true";
     const result = await getTeam(cookie, { limit: "50", active: activeParam });
     if (result.success) members = result.data.items || [];
-    else loadError = result.error || "Não foi possível carregar a equipe no momento.";
+    else loadError = result.error || "Could not load the team right now.";
   } catch (e) {
-    loadError = "Não foi possível carregar a equipe no momento.";
+    loadError = "Could not load the team right now.";
   }
 
   return {
@@ -68,7 +68,7 @@ const EMPTY_FORM = {
   isActive: true,
 };
 
-export default function EquipePage({ user, initialMembers, initialLoadError }) {
+export default function TeamPage({ user, initialMembers, initialLoadError }) {
   const [members, setMembers] = useState(initialMembers);
   const [pageError, setPageError] = useState(initialLoadError || "");
 
@@ -121,11 +121,11 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
         setMembers(result.data.items || []);
         setPageError("");
       } else {
-        setPageError(result?.error || "Não foi possível recarregar a equipe.");
+        setPageError(result?.error || "Could not reload the team right now.");
       }
     } catch (e) {
-      setPageError("Não foi possível recarregar a equipe.");
-      console.error("Erro ao recarregar membros:", e);
+      setPageError("Could not reload the team right now.");
+      console.error("Error reloading team members:", e);
     }
   }
 
@@ -159,7 +159,7 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
   }
 
   function closeModal() {
-    if (formTouched && !confirm("Existem alterações não salvas. Deseja sair sem salvar?")) return;
+    if (formTouched && !confirm("You have unsaved changes. Do you want to leave without saving?")) return;
     setShowModal(false);
     setEditItem(null);
     resetPhotoState("");
@@ -178,13 +178,13 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
 
     if (!ALLOWED_PHOTO_TYPES.has(selectedFile.type)) {
       event.target.value = "";
-      setFormError("Formato de foto inválido. Use JPG, PNG, WEBP ou GIF.");
+      setFormError("Invalid photo format. Use JPG, PNG, WEBP or GIF.");
       return;
     }
 
     if (selectedFile.size > MAX_PHOTO_SIZE_BYTES) {
       event.target.value = "";
-      setFormError("A foto deve ter no máximo 2 MB.");
+      setFormError("The photo must be 2 MB or smaller.");
       return;
     }
 
@@ -197,7 +197,7 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
   async function handleSubmit(event) {
     event.preventDefault();
     if (!form.fullName.trim() || !form.jobTitle.trim() || !form.email.trim()) {
-      setFormError("Nome, cargo e e-mail são obrigatórios.");
+      setFormError("Name, job title and email are required.");
       return;
     }
 
@@ -236,7 +236,7 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
         : await updateTeamMember(editItem.id, body);
 
       if (!result || !result.success) {
-        setFormError(result?.error || "Erro ao salvar. Verifique os dados e tente novamente.");
+        setFormError(result?.error || "Could not save. Please check the information and try again.");
         return;
       }
 
@@ -244,37 +244,37 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
       setShowModal(false);
       setEditItem(null);
       resetPhotoState("");
-      showToast(modalMode === "create" ? "Membro adicionado com sucesso." : "Membro atualizado com sucesso.");
+      showToast(modalMode === "create" ? "Member added successfully." : "Member updated successfully.");
       await reload();
     } catch (err) {
-      console.error("Erro ao salvar membro:", err);
-      setFormError("Erro de conexão. Verifique a rede e tente novamente.");
+      console.error("Error saving team member:", err);
+      setFormError("Connection error. Please check your network and try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   async function handleDelete(id) {
-    if (!confirm("Confirmar exclusão deste membro?")) return;
+    if (!confirm("Are you sure you want to delete this member?")) return;
 
     try {
       const result = await deleteTeamMember(id);
       if (!result || !result.success) {
-        showToast(result?.error || "Erro ao excluir membro.", "error");
+        showToast(result?.error || "Could not delete the member.", "error");
         return;
       }
-      showToast("Membro removido com sucesso.");
+      showToast("Member deleted successfully.");
       await reload();
     } catch (err) {
-      console.error("Erro ao excluir membro:", err);
-      showToast("Erro de conexão ao excluir.", "error");
+      console.error("Error deleting team member:", err);
+      showToast("Connection error while deleting.", "error");
     }
   }
 
   return (
     <>
       <Head>
-        <title>Portal do TI | Equipe</title>
+        <title>NerdPortal | Team</title>
       </Head>
 
       <Layout user={user}>
@@ -284,21 +284,21 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
 
         <section className={styles.header}>
           <div>
-            <h1 className={styles.title}>Equipe de Tecnologia da Informação</h1>
+            <h1 className={styles.title}>Information Technology Team</h1>
             <p className={styles.subtitle}>
-              Diretório de membros do setor de TI do NerdResolve.
+              Directory of the IT department members across the company.
             </p>
           </div>
           {isAdmin && (
             <button type="button" className="btn btn-primary" onClick={openCreate}>
-              + Novo Membro
+              + New Member
             </button>
           )}
         </section>
 
         {members.length === 0 ? (
           <div className={`card ${styles.emptyState}`}>
-            <p>{pageError || "Nenhum membro cadastrado."}</p>
+            <p>{pageError || "No team members registered yet."}</p>
           </div>
         ) : (
           <div className={styles.grid}>
@@ -330,7 +330,7 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
                   )}
                   {isAdmin && !member.is_active && (
                     <span className="badge badge-offline" style={{ marginTop: "var(--space-1)" }}>
-                      Inativo
+                      Inactive
                     </span>
                   )}
                 </div>
@@ -352,7 +352,7 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
                       onClick={() => openEdit(member)}
                       style={{ flex: 1 }}
                     >
-                      Editar
+                      Edit
                     </button>
                     <button
                       type="button"
@@ -360,7 +360,7 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
                       onClick={() => handleDelete(member.id)}
                       style={{ flex: 1 }}
                     >
-                      Excluir
+                      Delete
                     </button>
                   </div>
                 )}
@@ -375,7 +375,7 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
           <div className="modal" onClick={(event) => event.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">
-                {modalMode === "create" ? "Novo Membro" : "Editar Membro"}
+                {modalMode === "create" ? "New Member" : "Edit Member"}
               </h2>
               <button type="button" className="modal-close" onClick={closeModal}>
                 &times;
@@ -386,13 +386,13 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
               {formError && <div className="modal-error">{formError}</div>}
 
               <div className={styles.photoField}>
-                <label className="form-label">Foto do membro</label>
+                <label className="form-label">Member photo</label>
                 <div className={styles.photoUploadRow}>
                   <div className={styles.photoPreview}>
                     {photoPreviewUrl ? (
                       <img
                         src={photoPreviewUrl}
-                        alt={form.fullName || "Prévia da foto do membro"}
+                        alt={form.fullName || "Member photo preview"}
                         className={styles.photoPreviewImage}
                       />
                     ) : (
@@ -409,11 +409,11 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
                       onChange={handlePhotoChange}
                     />
                     <p className={styles.photoHelp}>
-                      Use JPG, PNG, WEBP ou GIF com até 2 MB.
+                      Use JPG, PNG, WEBP or GIF up to 2 MB.
                     </p>
                     {modalMode === "edit" && editItem?.photo_url && !photoFile && (
                       <p className={styles.photoHint}>
-                        Envie uma nova imagem apenas se quiser substituir a foto atual.
+                        Upload a new image only if you want to replace the current photo.
                       </p>
                     )}
                   </div>
@@ -422,30 +422,30 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Nome completo *</label>
+                  <label className="form-label">Full name *</label>
                   <input
                     className="form-input"
                     type="text"
                     value={form.fullName}
                     onChange={(event) => setField("fullName", event.target.value)}
-                    placeholder="Nome do membro"
+                    placeholder="Member name"
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Cargo *</label>
+                  <label className="form-label">Job title *</label>
                   <input
                     className="form-input"
                     type="text"
                     value={form.jobTitle}
                     onChange={(event) => setField("jobTitle", event.target.value)}
-                    placeholder="Cargo / função"
+                    placeholder="Job title / role"
                   />
                 </div>
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">E-mail *</label>
+                  <label className="form-label">Email *</label>
                   <input
                     className="form-input"
                     type="email"
@@ -455,7 +455,7 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Telefone</label>
+                  <label className="form-label">Phone</label>
                   <input
                     className="form-input"
                     type="text"
@@ -468,7 +468,7 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Departamento</label>
+                  <label className="form-label">Department</label>
                   <input
                     className="form-input"
                     type="text"
@@ -478,7 +478,7 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Ordem de exibição</label>
+                  <label className="form-label">Display order</label>
                   <input
                     className="form-input"
                     type="number"
@@ -490,13 +490,13 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Descrição / bio</label>
+                <label className="form-label">Description / bio</label>
                 <textarea
                   className="form-input"
                   rows={3}
                   value={form.description}
                   onChange={(event) => setField("description", event.target.value)}
-                  placeholder="Breve descrição do membro (opcional)"
+                  placeholder="Short description of the member (optional)"
                   style={{ resize: "vertical" }}
                 />
               </div>
@@ -511,17 +511,17 @@ export default function EquipePage({ user, initialMembers, initialLoadError }) {
                     style={{ width: "auto" }}
                   />
                   <label htmlFor="isActive" className="form-label" style={{ margin: 0 }}>
-                    Membro ativo (visível no diretório)
+                    Active member (visible in the directory)
                   </label>
                 </div>
               )}
 
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline" onClick={closeModal} disabled={submitting}>
-                  Cancelar
+                  Cancel
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? "Salvando..." : modalMode === "create" ? "Adicionar" : "Salvar alterações"}
+                  {submitting ? "Saving..." : modalMode === "create" ? "Add" : "Save changes"}
                 </button>
               </div>
             </form>

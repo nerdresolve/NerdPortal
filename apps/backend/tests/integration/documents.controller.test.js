@@ -19,7 +19,7 @@ jest.mock('../../dal/db', () => ({
 jest.mock('../../dal/audit.dal');
 jest.mock('../../dal/documents.dal');
 
-// Disco real em diretório temporário, sem mockar isPathWithinUploads.
+// Real disk in a temp directory, without mocking isPathWithinUploads.
 process.env.UPLOADS_DIR = TEST_UPLOADS_DIR;
 
 const supertest = require('supertest');
@@ -57,8 +57,8 @@ async function getAgentWithCsrf() {
   return { agent, csrfToken };
 }
 
-// team.controller.js cria uma subpasta "team" ao ser carregado; listamos só
-// os arquivos na raiz para não contar essa subpasta.
+// team.controller.js creates a "team" subfolder when it loads; list only
+// the files at the root so that subfolder is not counted.
 function filesInUploadsDir() {
   return fs.readdirSync(TEST_UPLOADS_DIR, { withFileTypes: true })
     .filter((entry) => entry.isFile())

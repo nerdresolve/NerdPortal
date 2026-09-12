@@ -4,7 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-// Usa um arquivo SQLite real (sem mocks) para validar o SQLiteSessionStore.
+// Uses a real SQLite file (no mocks) to validate SQLiteSessionStore.
 
 let dbFile;
 let SQLiteSessionStore;

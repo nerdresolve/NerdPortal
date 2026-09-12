@@ -1,17 +1,17 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import Layout from "../components/Layout/Layout";
 import { resolveUser, isAdminUser } from "../services/auth";
 import { getDocuments, clientFetch, uploadDocument, deleteDocument } from "../services/api";
-import styles from "../styles/Documentos.module.css";
+import styles from "../styles/Documents.module.css";
 
 const CATEGORIES = [
-  { value: "", label: "Todas as Categorias" },
-  { value: "general", label: "Geral" },
-  { value: "policy", label: "Políticas" },
-  { value: "procedure", label: "Procedimentos" },
+  { value: "", label: "All Categories" },
+  { value: "general", label: "General" },
+  { value: "policy", label: "Policies" },
+  { value: "procedure", label: "Procedures" },
   { value: "template", label: "Templates" },
-  { value: "report", label: "Relatórios" },
+  { value: "report", label: "Reports" },
 ];
 
 export async function getServerSideProps(context) {
@@ -32,10 +32,10 @@ export async function getServerSideProps(context) {
       documents = result.data.items || [];
       total = result.data.total || 0;
     } else {
-      loadError = result.error || "Não foi possível carregar os documentos no momento.";
+      loadError = result.error || "Could not load documents right now.";
     }
   } catch (e) {
-    loadError = "Não foi possível carregar os documentos no momento.";
+    loadError = "Could not load documents right now.";
   }
 
   return {
@@ -62,7 +62,7 @@ function formatFileSize(bytes) {
 
 function formatDate(dateStr) {
   if (!dateStr) return "";
-  return new Date(dateStr).toLocaleDateString("pt-BR");
+  return new Date(dateStr).toLocaleDateString("en-US");
 }
 
 function getMimeIcon(mimeType) {
@@ -80,7 +80,7 @@ const MIME_COLORS = {
   pdf: "var(--color-error)",
   image: "var(--color-accent)",
   sheet: "var(--color-primary)",
-  slide: "var(--amarelo-80)",
+  slide: "var(--color-accent-light)",
   doc: "#2563EB",
   text: "var(--color-text-muted)",
   file: "var(--gray-300)",
@@ -88,7 +88,7 @@ const MIME_COLORS = {
 
 const EMPTY_FORM = { category: "general", description: "" };
 
-export default function DocumentosPage({ user, initialDocuments, initialTotal, initialLoadError }) {
+export default function DocumentsPage({ user, initialDocuments, initialTotal, initialLoadError }) {
   const [documents, setDocuments] = useState(initialDocuments);
   const [total, setTotal] = useState(initialTotal);
   const [category, setCategory] = useState("");
@@ -129,11 +129,11 @@ export default function DocumentosPage({ user, initialDocuments, initialTotal, i
         setCategory(newCategory);
         setPageError("");
       } else {
-        setPageError(result?.error || "Não foi possível recarregar os documentos.");
+        setPageError(result?.error || "Could not reload documents right now.");
       }
     } catch (e) {
-      setPageError("Não foi possível recarregar os documentos.");
-      console.error("Erro ao recarregar documentos:", e);
+      setPageError("Could not reload documents right now.");
+      console.error("Failed to reload documents:", e);
     } finally {
       setLoading(false);
     }
@@ -159,7 +159,7 @@ export default function DocumentosPage({ user, initialDocuments, initialTotal, i
   async function handleUpload(e) {
     e.preventDefault();
     if (!file) {
-      setFormError("Selecione um arquivo.");
+      setFormError("Please select a file.");
       return;
     }
     setSubmitting(true);
@@ -173,33 +173,33 @@ export default function DocumentosPage({ user, initialDocuments, initialTotal, i
       }
       const result = await uploadDocument(formData);
       if (!result || !result.success) {
-        setFormError(result?.error || "Erro ao enviar arquivo. Verifique o tamanho e formato.");
+        setFormError(result?.error || "Could not upload the file. Check its size and format.");
         return;
       }
       closeModal();
-      showToast("Documento enviado com sucesso.");
+      showToast("Document uploaded successfully.");
       await fetchDocuments(category, 0);
     } catch (err) {
-      console.error("Erro ao enviar documento:", err);
-      setFormError("Erro de conexão. Verifique a rede e tente novamente.");
+      console.error("Failed to upload document:", err);
+      setFormError("Connection error. Check your network and try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   async function handleDelete(id) {
-    if (!confirm("Confirmar exclusão deste documento?")) return;
+    if (!confirm("Delete this document?")) return;
     try {
       const result = await deleteDocument(id);
       if (!result || !result.success) {
-        showToast(result?.error || "Erro ao excluir documento.", "error");
+        showToast(result?.error || "Could not delete the document.", "error");
         return;
       }
-      showToast("Documento excluído com sucesso.");
+      showToast("Document deleted successfully.");
       await fetchDocuments(category, offset);
     } catch (err) {
-      console.error("Erro ao excluir documento:", err);
-      showToast("Erro de conexão ao excluir.", "error");
+      console.error("Failed to delete document:", err);
+      showToast("Connection error while deleting.", "error");
     }
   }
 
@@ -209,7 +209,7 @@ export default function DocumentosPage({ user, initialDocuments, initialTotal, i
   return (
     <>
       <Head>
-        <title>Portal do TI | Documentos</title>
+        <title>NerdPortal | Documents</title>
       </Head>
 
       <Layout user={user}>
@@ -219,14 +219,14 @@ export default function DocumentosPage({ user, initialDocuments, initialTotal, i
 
         <section className={styles.header}>
           <div className={styles.headerLeft}>
-            <h1 className={styles.title}>Repositório de Documentos</h1>
+            <h1 className={styles.title}>Document Repository</h1>
             <p className={styles.subtitle}>
-              Arquivos e documentos do setor de TI.
+              Files and documents from the IT department.
             </p>
           </div>
           {isAdmin && (
             <button type="button" className="btn btn-primary" onClick={openUpload}>
-              + Enviar Documento
+              + Upload Document
             </button>
           )}
         </section>
@@ -241,24 +241,24 @@ export default function DocumentosPage({ user, initialDocuments, initialTotal, i
             ))}
           </select>
           <span className={styles.resultCount}>
-            {total} documento{total !== 1 ? "s" : ""}
+            {total} document{total !== 1 ? "s" : ""}
           </span>
         </div>
         {documents.length === 0 ? (
           <div className={`card ${styles.emptyState}`}>
-            <p>{pageError || "Nenhum documento encontrado."}</p>
+            <p>{pageError || "No documents found."}</p>
           </div>
         ) : (
           <div className={`card ${styles.listCard}`}>
             <table className={`data-table ${loading ? styles.loading : ""}`}>
               <thead>
                 <tr>
-                  <th>Documento</th>
-                  <th>Categoria</th>
-                  <th>Tamanho</th>
-                  <th>Enviado por</th>
-                  <th>Data</th>
-                  <th>Ação</th>
+                  <th>Document</th>
+                  <th>Category</th>
+                  <th>Size</th>
+                  <th>Uploaded by</th>
+                  <th>Date</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -303,7 +303,7 @@ export default function DocumentosPage({ user, initialDocuments, initialTotal, i
                               className="btn btn-danger btn-sm"
                               onClick={() => handleDelete(doc.id)}
                             >
-                              Excluir
+                              Delete
                             </button>
                           )}
                         </div>
@@ -322,10 +322,10 @@ export default function DocumentosPage({ user, initialDocuments, initialTotal, i
                   disabled={currentPage <= 1}
                   onClick={() => fetchDocuments(category, offset - limit)}
                 >
-                  Anterior
+                  Previous
                 </button>
                 <span className={styles.pageInfo}>
-                  Página {currentPage} de {totalPages}
+                  Page {currentPage} of {totalPages}
                 </span>
                 <button
                   type="button"
@@ -333,7 +333,7 @@ export default function DocumentosPage({ user, initialDocuments, initialTotal, i
                   disabled={currentPage >= totalPages}
                   onClick={() => fetchDocuments(category, offset + limit)}
                 >
-                  Próxima
+                  Next
                 </button>
               </div>
             )}
@@ -344,7 +344,7 @@ export default function DocumentosPage({ user, initialDocuments, initialTotal, i
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">Enviar Documento</h2>
+              <h2 className="modal-title">Upload Document</h2>
               <button type="button" className="modal-close" onClick={closeModal}>
                 &times;
               </button>
@@ -354,7 +354,7 @@ export default function DocumentosPage({ user, initialDocuments, initialTotal, i
               {formError && <div className="modal-error">{formError}</div>}
 
               <div className="form-group">
-                <label className="form-label">Arquivo *</label>
+                <label className="form-label">File *</label>
                 <input
                   className="form-input"
                   type="file"
@@ -363,43 +363,43 @@ export default function DocumentosPage({ user, initialDocuments, initialTotal, i
                   style={{ padding: "var(--space-2)" }}
                 />
                 <small style={{ color: "var(--color-text-muted)", fontSize: "0.8125rem" }}>
-                  Máximo 10MB. Formatos: PDF, Word, Excel, PowerPoint, imagens, texto.
+                  10MB maximum. Formats: PDF, Word, Excel, PowerPoint, images, text.
                 </small>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Categoria</label>
+                <label className="form-label">Category</label>
                 <select
                   className="form-input"
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
                 >
-                  <option value="general">Geral</option>
-                  <option value="policy">Políticas</option>
-                  <option value="procedure">Procedimentos</option>
+                  <option value="general">General</option>
+                  <option value="policy">Policies</option>
+                  <option value="procedure">Procedures</option>
                   <option value="template">Templates</option>
-                  <option value="report">Relatórios</option>
+                  <option value="report">Reports</option>
                 </select>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Descrição</label>
+                <label className="form-label">Description</label>
                 <input
                   className="form-input"
                   type="text"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Descrição opcional do documento"
+                  placeholder="Optional document description"
                   maxLength={500}
                 />
               </div>
 
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline" onClick={closeModal} disabled={submitting}>
-                  Cancelar
+                  Cancel
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? "Enviando..." : "Enviar"}
+                  {submitting ? "Uploading..." : "Upload"}
                 </button>
               </div>
             </form>
@@ -413,4 +413,3 @@ export default function DocumentosPage({ user, initialDocuments, initialTotal, i
     </>
   );
 }
-

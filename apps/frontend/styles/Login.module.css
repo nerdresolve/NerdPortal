@@ -96,7 +96,7 @@
   height: 0;
   border-left: 50px solid transparent;
   border-right: 50px solid transparent;
-  border-bottom: 75px solid var(--amarelo-45);
+  border-bottom: 75px solid var(--color-accent-light);
   transform: rotate(331.3deg);
   opacity: 0.6;
 }

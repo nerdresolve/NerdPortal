@@ -15,8 +15,40 @@ function resolveApiAssetUrl(path) {
   return `${API_BASE}/${path}`;
 }
 
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+/**
+ * The CSRF cookie is issued by the API on any request, but the browser only
+ * holds one after it has actually talked to the API. On a cold load — someone
+ * opening /login directly — no such request has happened yet, so a POST would
+ * go out with no token and the API would reject it with 403. A safe GET first
+ * makes the API set the cookie; the real request then carries it.
+ */
+async function ensureCsrfToken() {
+  if (typeof document === "undefined") return null;
+
+  let token = getCsrfToken();
+  if (token) return token;
+
+  try {
+    await fetch(`${API_BASE}/health`, {
+      method: "GET",
+      credentials: "include",
+    });
+  } catch {
+    // Offline or the API is unreachable — let the caller's request surface it.
+    return null;
+  }
+
+  return getCsrfToken();
+}
+
 async function clientFetch(path, options = {}) {
-  const csrfToken = getCsrfToken();
+  const method = (options.method || "GET").toUpperCase();
+  const csrfToken = SAFE_METHODS.has(method)
+    ? getCsrfToken()
+    : await ensureCsrfToken();
+
   const headers = {
     ...options.headers,
   };
@@ -36,7 +68,6 @@ async function clientFetch(path, options = {}) {
   });
 
   if (res.status === 401) {
-    const method = (options.method || "GET").toUpperCase();
     if (method !== "GET" && typeof window !== "undefined") {
       window.location.href = "/login";
     }

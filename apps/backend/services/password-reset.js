@@ -50,8 +50,8 @@ function isVerifiedTokenExpired(verifiedAt) {
 
 function buildResetEmailHtml(code) {
   const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, "");
-  const resetLink = `${frontendUrl}/recuperar-senha`;
-  const expiresLabel = `${DEFAULT_CODE_TTL_MINUTES} minuto${DEFAULT_CODE_TTL_MINUTES > 1 ? "s" : ""}`;
+  const resetLink = `${frontendUrl}/reset-password`;
+  const expiresLabel = `${DEFAULT_CODE_TTL_MINUTES} minute${DEFAULT_CODE_TTL_MINUTES > 1 ? "s" : ""}`;
 
   const bannerImg = bannerDataUri
     ? `<img src="${bannerDataUri}" width="600" height="203" style="display:block;width:100%;height:auto;max-width:100%">`
@@ -72,17 +72,17 @@ function buildResetEmailHtml(code) {
   const codeBlock = `
     <br>
     <table cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 16px 0">
-      <tbody><tr><td style="background:#007B4E;border-radius:8px;padding:14px 24px;text-align:center">
+      <tbody><tr><td style="background:#7C3AED;border-radius:8px;padding:14px 24px;text-align:center">
         <span style="font-family:Arial,sans-serif;font-size:28px;font-weight:700;letter-spacing:8px;color:#ffffff">${code}</span>
       </td></tr></tbody>
     </table>
     <span style="font-family:Arial,sans-serif;font-size:14px;color:#6b7280">
-      Expira em <strong>${expiresLabel}</strong>.
+      Expires in <strong>${expiresLabel}</strong>.
     </span>
     <br><br>
     <span style="font-family:Arial,sans-serif;font-size:14px">
-      Ou clique no link abaixo para acessar a página de redefinição:<br>
-      <a href="${resetLink}" style="color:#007B4E">${resetLink}</a>
+      Or click the link below to open the reset page:<br>
+      <a href="${resetLink}" style="color:#7C3AED">${resetLink}</a>
     </span>
     <br>`;
 
@@ -92,21 +92,21 @@ function buildResetEmailHtml(code) {
 }
 
 async function sendPasswordResetCodeEmail({ to, code, fullName }) {
-  const expiresLabel = `${DEFAULT_CODE_TTL_MINUTES} minuto${DEFAULT_CODE_TTL_MINUTES > 1 ? "s" : ""}`;
-  const subject = "Código de recuperação de senha - Portal do TI";
+  const expiresLabel = `${DEFAULT_CODE_TTL_MINUTES} minute${DEFAULT_CODE_TTL_MINUTES > 1 ? "s" : ""}`;
+  const subject = "Your NerdPortal password reset code";
 
   const text = [
-    fullName ? `Prezado(a) ${fullName},` : "Prezado(a) colaborador(a),",
+    fullName ? `Hello ${fullName},` : "Hello,",
     "",
-    "Você solicitou a redefinição de senha para acesso ao Portal de TI.",
+    "You requested a password reset for your NerdPortal account.",
     "",
-    `Seu código de autenticação é: ${code}`,
-    `Ele expira em ${expiresLabel}.`,
+    `Your verification code is: ${code}`,
+    `It expires in ${expiresLabel}.`,
     "",
-    "Caso não tenha feito essa solicitação, por favor desconsidere este e-mail.",
+    "If you did not request this, you can safely ignore this email.",
     "",
-    "Atenciosamente,",
-    "Equipe de TI",
+    "Thanks,",
+    "The IT Team",
   ].join("\n");
 
   const html = buildResetEmailHtml(code);

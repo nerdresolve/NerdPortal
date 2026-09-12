@@ -9,28 +9,35 @@ import {
   updateSystem,
   deleteSystem,
 } from "../services/api";
-import styles from "../styles/Sistemas.module.css";
+import styles from "../styles/Systems.module.css";
 
 const STATUS_OPTIONS = [
-  { value: "", label: "Todos os Status" },
-  { value: "active", label: "Ativo" },
-  { value: "maintenance", label: "Manutenção" },
-  { value: "deprecated", label: "Descontinuado" },
+  { value: "", label: "All Statuses" },
+  { value: "active", label: "Active" },
+  { value: "maintenance", label: "Maintenance" },
+  { value: "deprecated", label: "Deprecated" },
   { value: "offline", label: "Offline" },
 ];
 
 const CATEGORY_OPTIONS = [
-  { value: "", label: "Todas as Categorias" },
-  { value: "internal", label: "Interno" },
-  { value: "external", label: "Externo" },
-  { value: "infrastructure", label: "Infraestrutura" },
+  { value: "", label: "All Categories" },
+  { value: "internal", label: "Internal" },
+  { value: "external", label: "External" },
+  { value: "infrastructure", label: "Infrastructure" },
   { value: "saas", label: "SaaS" },
 ];
 
+// Display names for the stored category values, so the table shows "SaaS"
+// rather than a CSS-capitalized "Saas".
+const CATEGORY_LABELS = CATEGORY_OPTIONS.reduce((acc, opt) => {
+  if (opt.value) acc[opt.value] = opt.label;
+  return acc;
+}, {});
+
 const STATUS_LABELS = {
-  active: "Ativo",
-  maintenance: "Manutenção",
-  deprecated: "Descontinuado",
+  active: "Active",
+  maintenance: "Maintenance",
+  deprecated: "Deprecated",
   offline: "Offline",
 };
 
@@ -63,9 +70,9 @@ export async function getServerSideProps(context) {
     ]);
     user = resolvedUser;
     if (result.success) systems = result.data.items || [];
-    else loadError = result.error || "Não foi possível carregar os sistemas no momento.";
+    else loadError = result.error || "Could not load the systems right now.";
   } catch (e) {
-    loadError = "Não foi possível carregar os sistemas no momento.";
+    loadError = "Could not load the systems right now.";
   }
 
   return {
@@ -73,7 +80,7 @@ export async function getServerSideProps(context) {
   };
 }
 
-export default function SistemasPage({ user, initialSystems, initialLoadError }) {
+export default function SystemsPage({ user, initialSystems, initialLoadError }) {
   const [systems, setSystems] = useState(initialSystems);
   const [statusFilter, setStatusFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -111,11 +118,11 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
         setSystems(result.data.items || []);
         setPageError("");
       } else {
-        setPageError(result?.error || "Não foi possível recarregar os sistemas.");
+        setPageError(result?.error || "Could not reload the systems right now.");
       }
     } catch (e) {
-      setPageError("Não foi possível recarregar os sistemas.");
-      console.error("Erro ao recarregar sistemas:", e);
+      setPageError("Could not reload the systems right now.");
+      console.error("Error reloading systems:", e);
     } finally {
       setLoading(false);
     }
@@ -152,7 +159,7 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
   }
 
   function closeModal() {
-    if (formTouched && !confirm("Existem alterações não salvas. Deseja sair sem salvar?")) return;
+    if (formTouched && !confirm("You have unsaved changes. Do you want to leave without saving?")) return;
     setShowModal(false);
     setEditItem(null);
     setFormTouched(false);
@@ -167,7 +174,7 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.name.trim()) {
-      setFormError("Nome é obrigatório.");
+      setFormError("Name is required.");
       return;
     }
     setSubmitting(true);
@@ -185,41 +192,41 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
         : await updateSystem(editItem.id, payload);
 
       if (!result || !result.success) {
-        setFormError(result?.error || "Erro ao salvar. Verifique os dados e tente novamente.");
+        setFormError(result?.error || "Could not save. Please check the information and try again.");
         return;
       }
       setFormTouched(false);
       setShowModal(false);
-      showToast(modalMode === "create" ? "Sistema cadastrado com sucesso." : "Sistema atualizado com sucesso.");
+      showToast(modalMode === "create" ? "System created successfully." : "System updated successfully.");
       await reload();
     } catch (err) {
-      console.error("Erro ao salvar sistema:", err);
-      setFormError("Erro de conexão. Verifique a rede e tente novamente.");
+      console.error("Error saving system:", err);
+      setFormError("Connection error. Please check your network and try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   async function handleDelete(id) {
-    if (!confirm("Confirmar exclusão deste sistema?")) return;
+    if (!confirm("Are you sure you want to delete this system?")) return;
     try {
       const result = await deleteSystem(id);
       if (!result || !result.success) {
-        showToast(result?.error || "Erro ao excluir sistema.", "error");
+        showToast(result?.error || "Could not delete the system.", "error");
         return;
       }
-      showToast("Sistema removido com sucesso.");
+      showToast("System deleted successfully.");
       await reload();
     } catch (err) {
-      console.error("Erro ao excluir sistema:", err);
-      showToast("Erro de conexão ao excluir.", "error");
+      console.error("Error deleting system:", err);
+      showToast("Connection error while deleting.", "error");
     }
   }
 
   return (
     <>
       <Head>
-        <title>Portal do TI | Sistemas</title>
+        <title>NerdPortal | Systems</title>
       </Head>
 
       <Layout user={user}>
@@ -229,14 +236,14 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
 
         <section className={styles.header}>
           <div>
-            <h1 className={styles.title}>Sistemas Internos</h1>
+            <h1 className={styles.title}>Internal Systems</h1>
             <p className={styles.subtitle}>
-              Catálogo de sistemas e serviços utilizados pelo NerdResolve.
+              Catalog of systems and services used across the company.
             </p>
           </div>
           {isAdmin && (
             <button type="button" className="btn btn-primary" onClick={openCreate}>
-              + Novo Sistema
+              + New System
             </button>
           )}
         </section>
@@ -262,24 +269,24 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
           </select>
 
           <span className={styles.resultCount}>
-            {systems.length} sistema{systems.length !== 1 ? "s" : ""}
+            {systems.length} system{systems.length !== 1 ? "s" : ""}
           </span>
         </div>
         {systems.length === 0 ? (
           <div className={`card ${styles.emptyState}`}>
-            <p>{pageError || "Nenhum sistema encontrado com os filtros aplicados."}</p>
+            <p>{pageError || "No systems found with the selected filters."}</p>
           </div>
         ) : (
           <div className={`card ${styles.listCard} ${loading ? styles.loading : ""}`}>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Sistema</th>
-                  <th>Categoria</th>
+                  <th>System</th>
+                  <th>Category</th>
                   <th>Status</th>
-                  <th>Responsável</th>
-                  <th>Acesso</th>
-                  {isAdmin && <th>Ações</th>}
+                  <th>Owner</th>
+                  <th>Access</th>
+                  {isAdmin && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -292,7 +299,9 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
                       )}
                     </td>
                     <td>
-                      <span className={styles.sysCategory}>{sys.category}</span>
+                      <span className={styles.sysCategory}>
+                        {CATEGORY_LABELS[sys.category] || sys.category}
+                      </span>
                     </td>
                     <td>
                       <span className={`badge ${STATUS_BADGE[sys.status] || "badge-offline"}`}>
@@ -308,7 +317,7 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
                           rel="noopener noreferrer"
                           className={styles.accessLink}
                         >
-                          Abrir
+                          Open
                         </a>
                       ) : (
                         <span className={styles.noLink}>-</span>
@@ -322,14 +331,14 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
                             className="btn btn-outline btn-sm"
                             onClick={() => openEdit(sys)}
                           >
-                            Editar
+                            Edit
                           </button>
                           <button
                             type="button"
                             className="btn btn-danger btn-sm"
                             onClick={() => handleDelete(sys.id)}
                           >
-                            Excluir
+                            Delete
                           </button>
                         </div>
                       </td>
@@ -346,7 +355,7 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">
-                {modalMode === "create" ? "Novo Sistema" : "Editar Sistema"}
+                {modalMode === "create" ? "New System" : "Edit System"}
               </h2>
               <button type="button" className="modal-close" onClick={closeModal}>
                 &times;
@@ -357,19 +366,19 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
               {formError && <div className="modal-error">{formError}</div>}
 
               <div className="form-group">
-                <label className="form-label">Nome *</label>
+                <label className="form-label">Name *</label>
                 <input
                   className="form-input"
                   type="text"
                   value={form.name}
                   onChange={(e) => setField("name", e.target.value)}
-                  placeholder="Nome do sistema"
+                  placeholder="System name"
                   maxLength={200}
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label">URL de Acesso</label>
+                <label className="form-label">Access URL</label>
                 <input
                   className="form-input"
                   type="url"
@@ -380,13 +389,13 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
               </div>
 
               <div className="form-group">
-                <label className="form-label">Descrição</label>
+                <label className="form-label">Description</label>
                 <textarea
                   className="form-input"
                   rows={3}
                   value={form.description}
                   onChange={(e) => setField("description", e.target.value)}
-                  placeholder="Descrição breve do sistema"
+                  placeholder="Short description of the system"
                   style={{ resize: "vertical" }}
                 />
               </div>
@@ -399,22 +408,22 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
                     value={form.status}
                     onChange={(e) => setField("status", e.target.value)}
                   >
-                    <option value="active">Ativo</option>
-                    <option value="maintenance">Manutenção</option>
-                    <option value="deprecated">Descontinuado</option>
+                    <option value="active">Active</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="deprecated">Deprecated</option>
                     <option value="offline">Offline</option>
                   </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Categoria</label>
+                  <label className="form-label">Category</label>
                   <select
                     className="form-input"
                     value={form.category}
                     onChange={(e) => setField("category", e.target.value)}
                   >
-                    <option value="internal">Interno</option>
-                    <option value="external">Externo</option>
-                    <option value="infrastructure">Infraestrutura</option>
+                    <option value="internal">Internal</option>
+                    <option value="external">External</option>
+                    <option value="infrastructure">Infrastructure</option>
                     <option value="saas">SaaS</option>
                   </select>
                 </div>
@@ -422,10 +431,10 @@ export default function SistemasPage({ user, initialSystems, initialLoadError })
 
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline" onClick={closeModal} disabled={submitting}>
-                  Cancelar
+                  Cancel
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? "Salvando..." : modalMode === "create" ? "Criar" : "Salvar alterações"}
+                  {submitting ? "Saving..." : modalMode === "create" ? "Create" : "Save changes"}
                 </button>
               </div>
             </form>

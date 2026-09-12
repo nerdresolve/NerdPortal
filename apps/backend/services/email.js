@@ -19,7 +19,7 @@ function getEmailConfig() {
     user: process.env.SMTP_USER || "",
     password: process.env.SMTP_PASSWORD || "",
     fromEmail: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || "",
-    fromName: process.env.SMTP_FROM_NAME || "Portal do TI",
+    fromName: process.env.SMTP_FROM_NAME || "NerdPortal",
     authMethod: (process.env.SMTP_AUTH_METHOD || "LOGIN").toUpperCase(),
     heloName: process.env.SMTP_HELO_NAME || os.hostname() || "localhost",
     timeoutMs: parseInt(process.env.SMTP_TIMEOUT_MS || "10000", 10),

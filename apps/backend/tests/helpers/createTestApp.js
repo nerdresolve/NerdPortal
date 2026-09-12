@@ -26,7 +26,7 @@ function createTestApp({ injectSession = null } = {}) {
 
   app.use(
     session({
-      name: 'itportal.sid',
+      name: 'nerdportal.sid',
       secret: process.env.SESSION_SECRET,
       resave: false,
       saveUninitialized: false,

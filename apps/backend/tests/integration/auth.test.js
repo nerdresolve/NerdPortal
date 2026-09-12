@@ -304,6 +304,6 @@ describe('POST /api/v1/auth/password-reset/verify', () => {
       .send({ email: 'admin@example.com', code: '12345' });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/6 dígitos/);
+    expect(res.body.error).toMatch(/6 digits/);
   });
 });

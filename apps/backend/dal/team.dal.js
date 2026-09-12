@@ -55,8 +55,8 @@ async function update(id, {
   isActive,
   sortOrder,
 }) {
-  // photo_url não usa COALESCE (precisa aceitar NULL explícito ao remover foto);
-  // photoUrlProvided sinaliza a intenção.
+  // photo_url does not use COALESCE (it must accept an explicit NULL when removing a photo);
+  // photoUrlProvided signals that intent.
   const result = await db.query(
     `UPDATE team_members
      SET full_name = COALESCE($2, full_name),

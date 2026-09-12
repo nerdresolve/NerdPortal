@@ -11,11 +11,21 @@ const { DB_PATH } = requireBackend("./config/dbPath");
 
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || "12", 10);
 
-const ADMIN_EMAIL = "admin@example.com";
-const ADMIN_PASSWORD = process.env.ADMIN_SEED_PASSWORD || "Admin@ITPortal2026";
-const ADMIN_NAME = "Administrador TI";
+const ADMIN_EMAIL = process.env.ADMIN_SEED_EMAIL || "admin@example.com";
+const ADMIN_PASSWORD = process.env.ADMIN_SEED_PASSWORD;
+const ADMIN_NAME = process.env.ADMIN_SEED_NAME || "IT Administrator";
 
 async function seed() {
+  // There is no built-in default password: an unattended install must never
+  // come up with a publicly known admin credential.
+  if (!ADMIN_PASSWORD) {
+    console.error(
+      "ADMIN_SEED_PASSWORD is not set. Refusing to create an admin account."
+    );
+    console.error("Set it in your .env and run the seed again.");
+    process.exit(1);
+  }
+
   const db = new Database(DB_PATH);
   db.pragma("foreign_keys = ON");
 
@@ -36,8 +46,7 @@ async function seed() {
     ).run(id, ADMIN_EMAIL, hash, ADMIN_NAME);
 
     console.log("Admin user created: %s", ADMIN_EMAIL);
-    console.log("Default password: %s", ADMIN_PASSWORD);
-    console.log("IMPORTANT: Change this password after first login.");
+    console.log("IMPORTANT: sign in and change this password now.");
   } finally {
     db.close();
   }

@@ -70,17 +70,23 @@ class SQLiteSessionStore extends Store {
 }
 
 function sessionMiddleware() {
+  const sameSite = String(process.env.COOKIE_SAMESITE || "lax").toLowerCase();
+
   return session({
     store: new SQLiteSessionStore(),
-    name: "itportal.sid",
+    name: "nerdportal.sid",
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     rolling: true,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      // See middlewares/csrf.js: the frontend and the API are separate origins
+      // in the default deployment, so "strict" would drop the session cookie
+      // on every API call. Set COOKIE_SAMESITE=none (with HTTPS) if you serve
+      // them from unrelated domains.
+      secure: sameSite === "none" || process.env.NODE_ENV === "production",
+      sameSite,
       maxAge: 8 * 60 * 60 * 1000, // 8 hours
       path: "/",
     },

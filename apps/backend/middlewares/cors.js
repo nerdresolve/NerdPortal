@@ -1,7 +1,7 @@
-﻿const cors = require("cors");
+const cors = require("cors");
 
 function corsMiddleware() {
-  const defaultOrigins = ["http://localhost:3000", "http://itportal_frontend:3000"];
+  const defaultOrigins = ["http://localhost:3000", "http://nerdportal_frontend:3000"];
   const envOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean)
     : [];

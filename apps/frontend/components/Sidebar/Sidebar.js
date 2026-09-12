@@ -1,15 +1,15 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import styles from "./Sidebar.module.css";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", icon: "home" },
   { href: "/dashboard", label: "Dashboard", icon: "chart" },
-  { href: "/comunicados", label: "Comunicados", icon: "megaphone" },
-  { href: "/documentos", label: "Documentos", icon: "folder" },
-  { href: "/equipe", label: "Equipe TI", icon: "people" },
-  { href: "/sistemas", label: "Sistemas", icon: "server" },
-  { href: "/chamados", label: "Chamados", icon: "ticket" },
+  { href: "/announcements", label: "Announcements", icon: "megaphone" },
+  { href: "/documents", label: "Documents", icon: "folder" },
+  { href: "/team", label: "Team", icon: "people" },
+  { href: "/systems", label: "Systems", icon: "server" },
+  { href: "/support", label: "Support", icon: "ticket" },
 ];
 const ICONS = {
   home: (

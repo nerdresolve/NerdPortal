@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import Layout from "../components/Layout/Layout";
 import { resolveUser, isAdminUser } from "../services/auth";
@@ -9,7 +9,7 @@ import {
   updateAnnouncement,
   deleteAnnouncement,
 } from "../services/api";
-import styles from "../styles/Comunicados.module.css";
+import styles from "../styles/Announcements.module.css";
 
 export async function getServerSideProps(context) {
   const cookie = context.req.headers.cookie || "";
@@ -29,10 +29,10 @@ export async function getServerSideProps(context) {
       announcements = result.data.items || [];
       total = result.data.total || 0;
     } else {
-      loadError = result.error || "Não foi possível carregar os comunicados no momento.";
+      loadError = result.error || "Could not load announcements right now.";
     }
   } catch (e) {
-    loadError = "Não foi possível carregar os comunicados no momento.";
+    loadError = "Could not load announcements right now.";
   }
 
   return {
@@ -42,7 +42,7 @@ export async function getServerSideProps(context) {
 
 function formatDate(dateStr) {
   if (!dateStr) return "";
-  return new Date(dateStr).toLocaleDateString("pt-BR", {
+  return new Date(dateStr).toLocaleDateString("en-US", {
     day: "2-digit",
     month: "long",
     year: "numeric",
@@ -52,12 +52,12 @@ function formatDate(dateStr) {
 function isoToDisplay(isoDate) {
   if (!isoDate) return "";
   const [y, m, d] = isoDate.split("-");
-  return `${d}/${m}/${y}`;
+  return `${m}/${d}/${y}`;
 }
 
 const EMPTY_FORM = { title: "", body: "", isPinned: false, publishedAt: "" };
 
-export default function ComunicadosPage({ user, initialAnnouncements, initialTotal, initialLoadError }) {
+export default function AnnouncementsPage({ user, initialAnnouncements, initialTotal, initialLoadError }) {
   const [announcements, setAnnouncements] = useState(initialAnnouncements);
   const [total, setTotal] = useState(initialTotal);
   const [offset, setOffset] = useState(0);
@@ -96,11 +96,11 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
         setOffset(newOffset);
         setPageError("");
       } else {
-        setPageError(result?.error || "Não foi possível recarregar os comunicados.");
+        setPageError(result?.error || "Could not reload announcements right now.");
       }
     } catch (e) {
-      setPageError("Não foi possível recarregar os comunicados.");
-      console.error("Erro ao recarregar comunicados:", e);
+      setPageError("Could not reload announcements right now.");
+      console.error("Failed to reload announcements:", e);
     } finally {
       setLoading(false);
     }
@@ -131,7 +131,7 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
   }
 
   function closeModal() {
-    if (formTouched && !confirm("Existem alterações não salvas. Deseja sair sem salvar?")) return;
+    if (formTouched && !confirm("You have unsaved changes. Leave without saving?")) return;
     setShowModal(false);
     setEditItem(null);
     setFormTouched(false);
@@ -146,7 +146,7 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.title.trim() || !form.body.trim()) {
-      setFormError("Título e conteúdo são obrigatórios.");
+      setFormError("Title and content are required.");
       return;
     }
     setSubmitting(true);
@@ -163,17 +163,17 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
         : await updateAnnouncement(editItem.id, payload);
 
       if (!result || !result.success) {
-        setFormError(result?.error || "Erro ao salvar. Verifique os dados e tente novamente.");
+        setFormError(result?.error || "Could not save. Check the details and try again.");
         return;
       }
       setFormTouched(false);
       setShowModal(false);
       setSelected(null);
-      showToast(modalMode === "create" ? "Comunicado publicado com sucesso." : "Comunicado atualizado com sucesso.");
+      showToast(modalMode === "create" ? "Announcement published successfully." : "Announcement updated successfully.");
       await reload(modalMode === "create" ? 0 : offset);
     } catch (err) {
-      console.error("Erro ao salvar comunicado:", err);
-      setFormError("Erro de conexão. Verifique a rede e tente novamente.");
+      console.error("Failed to save announcement:", err);
+      setFormError("Connection error. Check your network and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -181,19 +181,19 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
 
   async function handleDelete(id, e) {
     if (e) e.stopPropagation();
-    if (!confirm("Confirmar exclusão deste comunicado?")) return;
+    if (!confirm("Delete this announcement?")) return;
     try {
       const result = await deleteAnnouncement(id);
       if (!result || !result.success) {
-        showToast(result?.error || "Erro ao excluir comunicado.", "error");
+        showToast(result?.error || "Could not delete the announcement.", "error");
         return;
       }
       setSelected(null);
-      showToast("Comunicado excluído com sucesso.");
+      showToast("Announcement deleted successfully.");
       await reload(offset);
     } catch (err) {
-      console.error("Erro ao excluir comunicado:", err);
-      showToast("Erro de conexão ao excluir.", "error");
+      console.error("Failed to delete announcement:", err);
+      showToast("Connection error while deleting.", "error");
     }
   }
 
@@ -203,7 +203,7 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
   return (
     <>
       <Head>
-        <title>Portal do TI | Comunicados</title>
+        <title>NerdPortal | Announcements</title>
       </Head>
 
       <Layout user={user}>
@@ -213,14 +213,14 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
 
         <section className={styles.header}>
           <div>
-            <h1 className={styles.title}>Comunicados</h1>
+            <h1 className={styles.title}>Announcements</h1>
             <p className={styles.subtitle}>
-              Comunicados internos do setor de Tecnologia da Informação.
+              Internal announcements from the Information Technology department.
             </p>
           </div>
           {isAdmin && (
             <button type="button" className="btn btn-primary" onClick={openCreate}>
-              + Novo Comunicado
+              + New Announcement
             </button>
           )}
         </section>
@@ -232,7 +232,7 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
                 className={styles.backBtn}
                 onClick={() => setSelected(null)}
               >
-                Voltar para lista
+                Back to list
               </button>
               {isAdmin && (
                 <div style={{ display: "flex", gap: "var(--space-2)" }}>
@@ -241,14 +241,14 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
                     className="btn btn-outline btn-sm"
                     onClick={(e) => openEdit(selected, e)}
                   >
-                    Editar
+                    Edit
                   </button>
                   <button
                     type="button"
                     className="btn btn-danger btn-sm"
                     onClick={(e) => handleDelete(selected.id, e)}
                   >
-                    Excluir
+                    Delete
                   </button>
                 </div>
               )}
@@ -256,7 +256,7 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
             <div className={styles.detailHeader}>
               <h2 className={styles.detailTitle}>{selected.title}</h2>
               {selected.is_pinned && (
-                <span className="badge badge-active">Fixado</span>
+                <span className="badge badge-active">Pinned</span>
               )}
             </div>
             <p className={styles.detailMeta}>
@@ -269,18 +269,18 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
           <>
             {announcements.length === 0 ? (
               <div className={`card ${styles.emptyState}`}>
-                <p>{pageError || "Nenhum comunicado publicado."}</p>
+                <p>{pageError || "No announcements published yet."}</p>
               </div>
             ) : (
               <div className={`card ${styles.listCard}`}>
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Título</th>
-                      <th>Autor</th>
-                      <th>Data</th>
+                      <th>Title</th>
+                      <th>Author</th>
+                      <th>Date</th>
                       <th>Status</th>
-                      {isAdmin && <th>Ações</th>}
+                      {isAdmin && <th>Actions</th>}
                     </tr>
                   </thead>
                   <tbody className={loading ? styles.loading : ""}>
@@ -297,7 +297,7 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
                         <td>{formatDate(item.published_at || item.created_at)}</td>
                         <td>
                           {item.is_pinned && (
-                            <span className="badge badge-active">Fixado</span>
+                            <span className="badge badge-active">Pinned</span>
                           )}
                         </td>
                         {isAdmin && (
@@ -308,14 +308,14 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
                                 className="btn btn-outline btn-sm"
                                 onClick={(e) => openEdit(item, e)}
                               >
-                                Editar
+                                Edit
                               </button>
                               <button
                                 type="button"
                                 className="btn btn-danger btn-sm"
                                 onClick={(e) => handleDelete(item.id, e)}
                               >
-                                Excluir
+                                Delete
                               </button>
                             </div>
                           </td>
@@ -333,10 +333,10 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
                       disabled={currentPage <= 1}
                       onClick={() => reload(offset - limit)}
                     >
-                      Anterior
+                      Previous
                     </button>
                     <span className={styles.pageInfo}>
-                      Página {currentPage} de {totalPages}
+                      Page {currentPage} of {totalPages}
                     </span>
                     <button
                       type="button"
@@ -344,7 +344,7 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
                       disabled={currentPage >= totalPages}
                       onClick={() => reload(offset + limit)}
                     >
-                      Próxima
+                      Next
                     </button>
                   </div>
                 )}
@@ -358,7 +358,7 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">
-                {modalMode === "create" ? "Novo Comunicado" : "Editar Comunicado"}
+                {modalMode === "create" ? "New Announcement" : "Edit Announcement"}
               </h2>
               <button type="button" className="modal-close" onClick={closeModal}>
                 &times;
@@ -369,32 +369,32 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
               {formError && <div className="modal-error">{formError}</div>}
 
               <div className="form-group">
-                <label className="form-label">Título *</label>
+                <label className="form-label">Title *</label>
                 <input
                   className="form-input"
                   type="text"
                   value={form.title}
                   onChange={(e) => setField("title", e.target.value)}
-                  placeholder="Título do comunicado"
+                  placeholder="Announcement title"
                   maxLength={300}
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label">Conteúdo *</label>
+                <label className="form-label">Content *</label>
                 <textarea
                   className="form-input"
                   rows={6}
                   value={form.body}
                   onChange={(e) => setField("body", e.target.value)}
-                  placeholder="Texto do comunicado..."
+                  placeholder="Announcement text..."
                   style={{ resize: "vertical" }}
                 />
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Data de Publicação</label>
+                  <label className="form-label">Publication Date</label>
                   <input
                     className="form-input"
                     type="date"
@@ -416,17 +416,17 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
                     style={{ width: "auto" }}
                   />
                   <label htmlFor="isPinned" className="form-label" style={{ margin: 0 }}>
-                    Fixar comunicado
+                    Pin announcement
                   </label>
                 </div>
               </div>
 
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline" onClick={closeModal} disabled={submitting}>
-                  Cancelar
+                  Cancel
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? "Salvando..." : modalMode === "create" ? "Publicar" : "Salvar alterações"}
+                  {submitting ? "Saving..." : modalMode === "create" ? "Publish" : "Save changes"}
                 </button>
               </div>
             </form>
@@ -440,4 +440,3 @@ export default function ComunicadosPage({ user, initialAnnouncements, initialTot
     </>
   );
 }
-

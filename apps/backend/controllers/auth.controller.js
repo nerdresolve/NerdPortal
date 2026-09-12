@@ -28,19 +28,19 @@ function normalizeResetCode(value) {
 
 function validatePasswordStrength(password) {
   if (typeof password !== "string" || password.length < 12) {
-    return "A nova senha deve ter pelo menos 12 caracteres.";
+    return "The new password must be at least 12 characters long.";
   }
   if (!/[a-z]/.test(password)) {
-    return "A nova senha deve conter ao menos uma letra minúscula.";
+    return "The new password must contain at least one lowercase letter.";
   }
   if (!/[A-Z]/.test(password)) {
-    return "A nova senha deve conter ao menos uma letra maiúscula.";
+    return "The new password must contain at least one uppercase letter.";
   }
   if (!/[0-9]/.test(password)) {
-    return "A nova senha deve conter ao menos um número.";
+    return "The new password must contain at least one number.";
   }
   if (!/[^A-Za-z0-9]/.test(password)) {
-    return "A nova senha deve conter ao menos um caractere especial.";
+    return "The new password must contain at least one special character.";
   }
   return "";
 }
@@ -49,7 +49,7 @@ function genericPasswordResetRequestResponse(res) {
   return res.status(200).json({
     success: true,
     data: {
-      message: "Se o e-mail estiver autorizado para administração, um código será enviado.",
+      message: "If the email is authorized for administration, a code will be sent.",
     },
   });
 }
@@ -186,14 +186,14 @@ async function requestPasswordReset(req, res) {
   if (!email) {
     return res.status(400).json({
       success: false,
-      error: "E-mail é obrigatório.",
+      error: "Email is required.",
     });
   }
 
   if (!isEmailConfigured()) {
     return res.status(503).json({
       success: false,
-      error: "O serviço de envio de e-mails ainda não está configurado.",
+      error: "The email service is not configured yet.",
     });
   }
 
@@ -286,14 +286,14 @@ async function verifyPasswordResetCode(req, res) {
   if (!email || !code) {
     return res.status(400).json({
       success: false,
-      error: "E-mail e código são obrigatórios.",
+      error: "Email and code are required.",
     });
   }
 
   if (!/^\d{6}$/.test(code)) {
     return res.status(400).json({
       success: false,
-      error: "O código deve conter 6 dígitos.",
+      error: "The code must be 6 digits.",
     });
   }
 
@@ -311,7 +311,7 @@ async function verifyPasswordResetCode(req, res) {
       await bcrypt.compare(code, DUMMY_RESET_CODE_HASH);
       return res.status(400).json({
         success: false,
-        error: "Código inválido ou expirado.",
+        error: "Invalid or expired code.",
       });
     }
 
@@ -324,7 +324,7 @@ async function verifyPasswordResetCode(req, res) {
 
       return res.status(400).json({
         success: false,
-        error: "Código inválido ou expirado.",
+        error: "Invalid or expired code.",
       });
     }
 
@@ -367,7 +367,7 @@ async function confirmPasswordReset(req, res) {
   if (!email || !resetToken || !newPassword) {
     return res.status(400).json({
       success: false,
-      error: "E-mail, token e nova senha são obrigatórios.",
+      error: "Email, token and new password are required.",
     });
   }
 
@@ -391,7 +391,7 @@ async function confirmPasswordReset(req, res) {
     ) {
       return res.status(400).json({
         success: false,
-        error: "Token de redefinição inválido ou expirado.",
+        error: "Invalid or expired reset token.",
       });
     }
 
@@ -430,7 +430,7 @@ async function confirmPasswordReset(req, res) {
     res.status(200).json({
       success: true,
       data: {
-        message: "Senha redefinida com sucesso.",
+        message: "Password reset successfully.",
       },
     });
   } catch (err) {
@@ -468,7 +468,7 @@ async function logout(req, res) {
       });
     }
 
-    res.clearCookie("itportal.sid", { path: "/" });
+    res.clearCookie("nerdportal.sid", { path: "/" });
     res.clearCookie("csrf_token", { path: "/" });
 
     res.status(200).json({

@@ -31,7 +31,7 @@ const upload = multer({
   },
   fileFilter: function (_req, file, cb) {
     if (!ALLOWED_PHOTO_TYPES[file.mimetype]) {
-      return cb(new Error("Formato de foto inválido. Use JPG, PNG, WEBP ou GIF."));
+      return cb(new Error("Invalid photo format. Use JPG, PNG, WEBP or GIF."));
     }
     cb(null, true);
   },
@@ -44,13 +44,13 @@ function teamPhotoUpload(req, res, next) {
     if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
       return res.status(400).json({
         success: false,
-        error: "A foto deve ter no máximo 2 MB.",
+        error: "The photo must be 2 MB or smaller.",
       });
     }
 
     return res.status(400).json({
       success: false,
-      error: err.message || "Falha ao processar a foto enviada.",
+      error: err.message || "Failed to process the uploaded photo.",
     });
   });
 }

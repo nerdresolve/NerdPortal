@@ -1,13 +1,14 @@
-﻿import Head from "next/head";
+import Head from "next/head";
 import Layout from "../components/Layout/Layout";
 import { resolveUser } from "../services/auth";
 import { getAnnouncements, getSystems } from "../services/api";
+import brand from "../brand.config";
 import styles from "../styles/Home.module.css";
 
 const STATUS_LABELS = {
-  active: "Ativo",
-  maintenance: "Manutenção",
-  deprecated: "Descontinuado",
+  active: "Active",
+  maintenance: "Maintenance",
+  deprecated: "Deprecated",
   offline: "Offline",
 };
 
@@ -32,14 +33,14 @@ export async function getServerSideProps(context) {
     if (sysResult.success) systems = sysResult.data.items || [];
 
     const failedSections = [];
-    if (!annResult.success) failedSections.push("comunicados");
-    if (!sysResult.success) failedSections.push("sistemas");
+    if (!annResult.success) failedSections.push("announcements");
+    if (!sysResult.success) failedSections.push("systems");
 
     if (failedSections.length > 0) {
-      loadError = `Não foi possível carregar ${failedSections.join(" e ")} no momento.`;
+      loadError = `Could not load ${failedSections.join(" and ")} right now.`;
     }
   } catch (e) {
-    loadError = "Não foi possível carregar os blocos públicos da página inicial no momento.";
+    loadError = "Could not load the home page content right now.";
   }
 
   return {
@@ -54,7 +55,7 @@ export default function HomePage({ user, announcements, systems, loadError }) {
   return (
     <>
       <Head>
-        <title>Portal do TI | Início</title>
+        <title>{`${brand.name} | Home`}</title>
       </Head>
 
       <Layout user={user}>
@@ -63,39 +64,39 @@ export default function HomePage({ user, announcements, systems, loadError }) {
         )}
         <section className={styles.welcome}>
           <h1 className={styles.welcomeTitle}>
-            Portal do TI
+            {brand.name}
           </h1>
           <p className={styles.welcomeText}>
-            Central de acesso a sistemas, documentos, comunicados e métricas do setor de TI do NerdResolve.
+            {brand.tagline}
           </p>
         </section>
         <section className={styles.statsGrid}>
           <div className={`card ${styles.statCard}`}>
             <span className={styles.statValue}>{systems.length}</span>
-            <span className={styles.statLabel}>Sistemas Catalogados</span>
+            <span className={styles.statLabel}>Systems Catalogued</span>
           </div>
           <div className={`card ${styles.statCard}`}>
             <span className={`${styles.statValue} ${styles.statActive}`}>{activeCount}</span>
-            <span className={styles.statLabel}>Sistemas Ativos</span>
+            <span className={styles.statLabel}>Active Systems</span>
           </div>
           <div className={`card ${styles.statCard}`}>
             <span className={`${styles.statValue} ${styles.statWarning}`}>{maintenanceCount}</span>
-            <span className={styles.statLabel}>Em Manutenção</span>
+            <span className={styles.statLabel}>Under Maintenance</span>
           </div>
           <div className={`card ${styles.statCard}`}>
             <span className={styles.statValue}>{announcements.length}</span>
-            <span className={styles.statLabel}>Comunicados Recentes</span>
+            <span className={styles.statLabel}>Recent Announcements</span>
           </div>
         </section>
         <div className={styles.contentGrid}>
           <section className="card">
             <div className="card-header">
-              <h2>Comunicados Recentes</h2>
-              <a href="/comunicados" className={styles.viewAll}>Ver todos</a>
+              <h2>Recent Announcements</h2>
+              <a href="/announcements" className={styles.viewAll}>View all</a>
             </div>
 
             {announcements.length === 0 ? (
-              <p className={styles.emptyState}>Nenhum comunicado publicado.</p>
+              <p className={styles.emptyState}>No announcements published yet.</p>
             ) : (
               <ul className={styles.announcementList}>
                 {announcements.map((item) => (
@@ -103,12 +104,12 @@ export default function HomePage({ user, announcements, systems, loadError }) {
                     <div className={styles.announcementHeader}>
                       <h3 className={styles.announcementTitle}>{item.title}</h3>
                       {item.is_pinned && (
-                        <span className="badge badge-active">Fixado</span>
+                        <span className="badge badge-active">Pinned</span>
                       )}
                     </div>
                     <p className={styles.announcementMeta}>
                       {item.author_name} &middot;{" "}
-                      {new Date(item.created_at).toLocaleDateString("pt-BR")}
+                      {new Date(item.created_at).toLocaleDateString("en-US")}
                     </p>
                   </li>
                 ))}
@@ -117,12 +118,12 @@ export default function HomePage({ user, announcements, systems, loadError }) {
           </section>
           <section className="card">
             <div className="card-header">
-              <h2>Sistemas Internos</h2>
-              <a href="/sistemas" className={styles.viewAll}>Ver todos</a>
+              <h2>Internal Systems</h2>
+              <a href="/systems" className={styles.viewAll}>View all</a>
             </div>
 
             {systems.length === 0 ? (
-              <p className={styles.emptyState}>Nenhum sistema cadastrado.</p>
+              <p className={styles.emptyState}>No systems registered yet.</p>
             ) : (
               <ul className={styles.systemsList}>
                 {systems.slice(0, 6).map((sys) => (

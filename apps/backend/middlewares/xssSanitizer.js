@@ -1,6 +1,6 @@
 const { escapeHtml } = require("../utils/sanitize");
 
-// Campos de credencial não são HTML-encoded — são comparados como valor opaco (hash), nunca renderizados.
+// Credential fields are not HTML-encoded — they are compared as opaque values (hashes), never rendered.
 const EXEMPT_BODY_FIELDS = new Set(["password", "newPassword", "resetToken"]);
 
 function sanitizeValue(value, exemptFields) {

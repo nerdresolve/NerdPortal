@@ -1,8 +1,8 @@
 {
-  "name": "itportal-frontend",
-  "version": "0.1.0",
+  "name": "nerdportal-frontend",
+  "version": "1.0.0",
   "private": true,
-  "description": "ITPortal Frontend - NerdResolve",
+  "description": "NerdPortal frontend (Next.js)",
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",

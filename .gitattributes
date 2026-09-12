@@ -1,0 +1,17 @@
+# Normalize line endings so a Windows clone still produces a working build.
+# Shell scripts and Dockerfiles MUST keep LF: a CRLF shebang makes Linux
+# report "no such file or directory" for the interpreter.
+* text=auto eol=lf
+
+*.sh        text eol=lf
+Dockerfile  text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+
+*.png binary
+*.webp binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.db binary

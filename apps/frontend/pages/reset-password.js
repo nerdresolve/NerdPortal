@@ -1,8 +1,9 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import Head from "next/head";
 import { getMe, requestPasswordReset, verifyPasswordResetCode, confirmPasswordReset } from "../services/api";
-import styles from "../styles/RecuperarSenha.module.css";
+import brand from "../brand.config";
+import styles from "../styles/ResetPassword.module.css";
 
 export async function getServerSideProps(context) {
   const cookie = context.req.headers.cookie || "";
@@ -18,15 +19,15 @@ export async function getServerSideProps(context) {
 }
 
 function validatePasswordStrength(password) {
-  if (password.length < 12) return "A nova senha deve ter pelo menos 12 caracteres.";
-  if (!/[a-z]/.test(password)) return "A nova senha deve conter ao menos uma letra minúscula.";
-  if (!/[A-Z]/.test(password)) return "A nova senha deve conter ao menos uma letra maiúscula.";
-  if (!/[0-9]/.test(password)) return "A nova senha deve conter ao menos um número.";
-  if (!/[^A-Za-z0-9]/.test(password)) return "A nova senha deve conter ao menos um caractere especial.";
+  if (password.length < 12) return "The new password must be at least 12 characters long.";
+  if (!/[a-z]/.test(password)) return "The new password must contain at least one lowercase letter.";
+  if (!/[A-Z]/.test(password)) return "The new password must contain at least one uppercase letter.";
+  if (!/[0-9]/.test(password)) return "The new password must contain at least one number.";
+  if (!/[^A-Za-z0-9]/.test(password)) return "The new password must contain at least one special character.";
   return "";
 }
 
-export default function RecuperarSenhaPage() {
+export default function ResetPasswordPage() {
   const [step, setStep] = useState("request");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -53,14 +54,14 @@ export default function RecuperarSenhaPage() {
     try {
       const result = await requestPasswordReset(email.trim());
       if (!result || !result.success) {
-        setError(result?.error || "Não foi possível iniciar a recuperação de senha.");
+        setError(result?.error || "Could not start the password reset process.");
         return;
       }
 
       setStep("verify");
-      setNotice(result.data?.message || "Se o e-mail estiver autorizado, um código será enviado.");
+      setNotice(result.data?.message || "If the email is authorized, a code will be sent.");
     } catch (err) {
-      setError("Erro de conexão com o servidor.");
+      setError("Connection error with the server.");
     } finally {
       setLoading(false);
     }
@@ -75,15 +76,15 @@ export default function RecuperarSenhaPage() {
     try {
       const result = await verifyPasswordResetCode(email.trim(), code.trim());
       if (!result || !result.success) {
-        setError(result?.error || "Não foi possível validar o código informado.");
+        setError(result?.error || "Could not validate the code provided.");
         return;
       }
 
       setResetToken(result.data?.resetToken || "");
       setStep("reset");
-      setNotice(`Código validado. Defina a nova senha nos próximos ${result.data?.expiresInMinutes || 15} minutos.`);
+      setNotice(`Code validated. Set your new password within the next ${result.data?.expiresInMinutes || 15} minutes.`);
     } catch (err) {
-      setError("Erro de conexão com o servidor.");
+      setError("Connection error with the server.");
     } finally {
       setLoading(false);
     }
@@ -95,7 +96,7 @@ export default function RecuperarSenhaPage() {
     setNotice("");
 
     if (newPassword !== confirmPassword) {
-      setError("A confirmação da senha não confere.");
+      setError("The password confirmation does not match.");
       return;
     }
 
@@ -110,7 +111,7 @@ export default function RecuperarSenhaPage() {
     try {
       const result = await confirmPasswordReset(email.trim(), resetToken, newPassword);
       if (!result || !result.success) {
-        setError(result?.error || "Não foi possível redefinir a senha.");
+        setError(result?.error || "Could not reset the password.");
         return;
       }
 
@@ -119,9 +120,9 @@ export default function RecuperarSenhaPage() {
       setResetToken("");
       setNewPassword("");
       setConfirmPassword("");
-      setNotice(result.data?.message || "Senha redefinida com sucesso.");
+      setNotice(result.data?.message || "Password reset successfully.");
     } catch (err) {
-      setError("Erro de conexão com o servidor.");
+      setError("Connection error with the server.");
     } finally {
       setLoading(false);
     }
@@ -130,16 +131,16 @@ export default function RecuperarSenhaPage() {
   return (
     <>
       <Head>
-        <title>Portal do TI | Recuperar Senha</title>
+        <title>NerdPortal | Reset Password</title>
       </Head>
 
       <div className={styles.container}>
         <div className={styles.brandPanel}>
           <div className={styles.brandContent}>
-            <img src="/logo.webp" alt="NerdResolve" className={styles.brandLogo} />
-            <h1 className={styles.brandTitle}>Recuperação de Senha</h1>
+            <img src="/logo-dark.svg" alt={brand.logoAlt} className={styles.brandLogo} />
+            <h1 className={styles.brandTitle}>Password Recovery</h1>
             <p className={styles.brandSubtitle}>
-              Fluxo seguro para acesso administrativo do Portal do TI.
+              Secure flow for NerdPortal administrative access.
             </p>
           </div>
           <div className={styles.meshContainer}>
@@ -153,7 +154,7 @@ export default function RecuperarSenhaPage() {
         <div className={styles.formPanel}>
           <div className={styles.formWrapper}>
             <div className={styles.stepList}>
-              {["Solicitar", "Validar", "Redefinir"].map((label, index) => (
+              {["Request", "Verify", "Reset"].map((label, index) => (
                 <div
                   key={label}
                   className={`${styles.stepItem} ${currentStepIndex >= index ? styles.stepItemActive : ""}`}
@@ -164,9 +165,9 @@ export default function RecuperarSenhaPage() {
               ))}
             </div>
 
-            <h2 className={styles.formTitle}>Redefinir senha do administrador</h2>
+            <h2 className={styles.formTitle}>Reset administrator password</h2>
             <p className={styles.formDescription}>
-              Informe o e-mail administrativo, valide o código recebido e então defina uma nova senha.
+              Enter the administrator email, verify the code you receive, and then set a new password.
             </p>
 
             {notice && <div className={styles.notice}>{notice}</div>}
@@ -175,21 +176,21 @@ export default function RecuperarSenhaPage() {
             {step === "request" && (
               <form onSubmit={handleRequestCode} className={styles.form}>
                 <div className="form-group">
-                  <label htmlFor="email" className="form-label">E-mail administrativo</label>
+                  <label htmlFor="email" className="form-label">Administrator email</label>
                   <input
                     id="email"
                     type="email"
                     className="form-input"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
-                    placeholder="admin@empresa.com.br"
+                    placeholder="admin@example.com"
                     autoComplete="email"
                     required
                   />
                 </div>
 
                 <button type="submit" className={`btn btn-primary ${styles.submitBtn}`} disabled={loading}>
-                  {loading ? "Enviando código..." : "Enviar código"}
+                  {loading ? "Sending code..." : "Send code"}
                 </button>
               </form>
             )}
@@ -197,12 +198,12 @@ export default function RecuperarSenhaPage() {
             {step === "verify" && (
               <form onSubmit={handleVerifyCode} className={styles.form}>
                 <div className={styles.summaryBox}>
-                  <span className={styles.summaryLabel}>E-mail selecionado</span>
+                  <span className={styles.summaryLabel}>Selected email</span>
                   <strong className={styles.summaryValue}>{email}</strong>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="code" className="form-label">Código de autenticação</label>
+                  <label htmlFor="code" className="form-label">Authentication code</label>
                   <input
                     id="code"
                     type="text"
@@ -219,7 +220,7 @@ export default function RecuperarSenhaPage() {
                 </div>
 
                 <button type="submit" className={`btn btn-primary ${styles.submitBtn}`} disabled={loading}>
-                  {loading ? "Validando..." : "Validar código"}
+                  {loading ? "Verifying..." : "Verify code"}
                 </button>
 
                 <button
@@ -233,7 +234,7 @@ export default function RecuperarSenhaPage() {
                   }}
                   disabled={loading}
                 >
-                  Alterar e-mail
+                  Change email
                 </button>
               </form>
             )}
@@ -241,64 +242,64 @@ export default function RecuperarSenhaPage() {
             {step === "reset" && (
               <form onSubmit={handleConfirmPassword} className={styles.form}>
                 <div className={styles.summaryBox}>
-                  <span className={styles.summaryLabel}>Conta validada</span>
+                  <span className={styles.summaryLabel}>Verified account</span>
                   <strong className={styles.summaryValue}>{email}</strong>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="newPassword" className="form-label">Nova senha</label>
+                  <label htmlFor="newPassword" className="form-label">New password</label>
                   <input
                     id="newPassword"
                     type="password"
                     className="form-input"
                     value={newPassword}
                     onChange={(event) => setNewPassword(event.target.value)}
-                    placeholder="Digite a nova senha"
+                    placeholder="Enter the new password"
                     autoComplete="new-password"
                     required
                   />
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="confirmPassword" className="form-label">Confirmar nova senha</label>
+                  <label htmlFor="confirmPassword" className="form-label">Confirm new password</label>
                   <input
                     id="confirmPassword"
                     type="password"
                     className="form-input"
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
-                    placeholder="Repita a nova senha"
+                    placeholder="Repeat the new password"
                     autoComplete="new-password"
                     required
                   />
                 </div>
 
                 <ul className={styles.passwordRules}>
-                  <li>Pelo menos 12 caracteres</li>
-                  <li>Uma letra maiúscula e uma minúscula</li>
-                  <li>Ao menos um número e um caractere especial</li>
+                  <li>At least 12 characters</li>
+                  <li>One uppercase and one lowercase letter</li>
+                  <li>At least one number and one special character</li>
                 </ul>
 
                 <button type="submit" className={`btn btn-primary ${styles.submitBtn}`} disabled={loading}>
-                  {loading ? "Redefinindo..." : "Salvar nova senha"}
+                  {loading ? "Resetting..." : "Save new password"}
                 </button>
               </form>
             )}
 
             {step === "success" && (
               <div className={styles.successBox}>
-                <h3 className={styles.successTitle}>Senha atualizada</h3>
+                <h3 className={styles.successTitle}>Password updated</h3>
                 <p className={styles.successText}>
-                  O acesso administrativo já pode ser feito com a nova senha.
+                  You can now sign in with the new password.
                 </p>
                 <Link href="/login" className={`btn btn-primary ${styles.submitBtn}`}>
-                  Voltar para o login
+                  Back to login
                 </Link>
               </div>
             )}
 
             <Link href="/login" className={styles.backLink}>
-              Voltar para o login
+              Back to login
             </Link>
           </div>
         </div>

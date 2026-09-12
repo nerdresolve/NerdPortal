@@ -20,8 +20,13 @@
   gap: var(--space-4);
 }
 
+.brandLink {
+  display: inline-flex;
+  align-items: center;
+}
+
 .logo {
-  height: 36px;
+  height: 34px;
   width: auto;
 }
 
@@ -32,10 +37,10 @@
 }
 
 .portalName {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--color-primary);
-  letter-spacing: -0.01em;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  letter-spacing: 0.01em;
 }
 
 .right {

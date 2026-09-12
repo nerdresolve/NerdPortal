@@ -1,731 +1,301 @@
-# Portal do TI — NerdResolve
+<div align="center">
 
-Plataforma institucional do NerdResolve para centralização de comunicação, documentos, sistemas e métricas do setor de Tecnologia da Informação. Classificado como ativo crítico corporativo. Opera sob modelo de **Leitura Pública / Escrita Restrita**: todo o conteúdo é acessível sem autenticação, enquanto operações de criação, edição e exclusão exigem sessão administrativa.
+<img src="docs/brand/banner.svg" alt="NerdPortal: the IT department's front door, not another ticket queue" width="100%">
 
----
+The intranet the IT department never gets around to building: systems,
+documents, announcements and metrics on one page, readable by everyone without
+a login.
 
-## Sumário
+[![License](https://img.shields.io/badge/license-MIT-7C3AED)](LICENSE) ![Stack](https://img.shields.io/badge/Next.js%2014-Express%204-7C3AED) ![Database](https://img.shields.io/badge/SQLite-no%20server-A855F7) ![Tests](https://img.shields.io/badge/tests-120%20passing-0F7A42)
 
-1. [Pré-requisitos](#1-pré-requisitos)
-2. [Instalação dos Pré-requisitos](#2-instalação-dos-pré-requisitos)
-3. [Obtendo o Repositório](#3-obtendo-o-repositório)
-4. [Configuração do Ambiente](#4-configuração-do-ambiente)
-5. [Execução com Docker (Recomendado)](#5-execução-com-docker-recomendado)
-6. [Execução Manual (Sem Docker)](#6-execução-manual-sem-docker)
-7. [Migração do Banco de Dados](#7-migração-do-banco-de-dados)
-8. [Criação do Usuário Administrador](#8-criação-do-usuário-administrador)
-9. [Acessando o Sistema](#9-acessando-o-sistema)
-10. [Estrutura do Projeto](#10-estrutura-do-projeto)
-11. [Endpoints da API](#11-endpoints-da-api)
-12. [Modelo de Acesso e Segurança](#12-modelo-de-acesso-e-segurança)
-13. [Resolução de Problemas](#13-resolução-de-problemas)
-14. [Configuração para Produção com Domínio Próprio](#14-configuração-para-produção-com-domínio-próprio)
+[The screens](#the-screens) · [How it works](#how-it-works) · [Run it](#run-it) · [Make it yours](#make-it-yours) · [Configure](#configure) · [Security](#security) · [License](#license)
+
+</div>
 
 ---
 
-## 1. Pré-requisitos
+## What it is
 
-| Software       | Versão Mínima | Finalidade                                        |
-|----------------|---------------|---------------------------------------------------|
-| Docker         | 24.0+         | Containerização dos serviços                      |
-| Docker Compose | 2.20+         | Orquestração dos containers                       |
-| Git            | 2.40+         | Controle de versão                                |
-| Node.js        | 20.0+         | Runtime (somente para execução manual sem Docker) |
-| npm            | 10.0+         | Gerenciador de pacotes (incluso no Node.js)       |
+Every IT department ends up answering the same four questions over and over.
+*Which system do I use for that? Where is the VPN document? Is the printer down
+again? Who do I email about access?* The answers exist — scattered across chat
+threads, a wiki nobody updates and one person's memory.
 
-> Para implantação via Docker (recomendada), apenas **Docker**, **Docker Compose** e **Git** são necessários. Node.js é provido pelos containers. O banco de dados é **SQLite** (arquivo embarcado, sem servidor separado) — persistido em um volume Docker.
+NerdPortal puts them on one page. Anyone in the company can read it without an
+account: the system catalogue with live status, the document repository, the
+announcements and the team directory. Only writing requires a login, so the
+portal stays current without becoming a second job.
+
+<div align="center">
+<img src="docs/screenshots/home.webp" alt="The NerdPortal home page" width="88%">
+</div>
 
 ---
 
-## 2. Instalação dos Pré-requisitos
+## The screens
 
-### 2.1 Git
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/systems.webp" alt="The system catalogue"><br><sub><b>Systems</b> · every internal tool, its status and who owns it</sub></td>
+<td width="50%"><img src="docs/screenshots/dashboard.webp" alt="The metrics dashboard"><br><sub><b>Metrics</b> · KPIs grouped by category, with the period they cover</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/team.webp" alt="The team directory"><br><sub><b>Team</b> · who does what, and how to reach them</sub></td>
+<td width="50%"><img src="docs/screenshots/announcements.webp" alt="The announcements list"><br><sub><b>Announcements</b> · pinned items stay at the top</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/documents.webp" alt="The document repository"><br><sub><b>Documents</b> · uploads with category, size and uploader</sub></td>
+<td width="50%"><img src="docs/screenshots/login.webp" alt="The sign-in screen"><br><sub><b>Sign in</b> · only needed to change something</sub></td>
+</tr>
+</table>
 
-**Ubuntu/Debian:**
-```bash
-sudo apt update && sudo apt install git -y
-git --version
+> These aren't mockups. It's the application running against a seeded database,
+> photographed with a headless browser.
+
+---
+
+## How it works
+
+The whole product is one idea: **public read, restricted write**.
+
+```
+GET  /api/v1/systems        no session        anyone can read
+GET  /api/v1/announcements  no session
+GET  /api/v1/documents      no session
+     │
+POST/PUT/DELETE             session + role    only an admin can write
+     │
+[1] session cookie          httpOnly, SQLite-backed store
+     │
+[2] CSRF double-submit      cookie + X-CSRF-Token header must match
+     │
+[3] role check              requireRole("admin")
+     │
+[4] audit log               who, what, when, from which IP
 ```
 
-**macOS:**
-```bash
-brew install git
-```
+### Three decisions worth recording
 
-**Windows:**
-Baixe o instalador em https://git-scm.com/download/win e siga o assistente. Após a instalação, abra o Git Bash e verifique com `git --version`.
+**Reading needs no account.** The alternative — putting the whole intranet
+behind a login — is what kills these portals: people stop checking it because
+the friction beats the benefit. Here the content is public to the network and
+only mutation is gated, so the reason to visit survives.
 
----
+**SQLite, not Postgres.** An IT portal for one company is a handful of tables
+read by a few hundred people. A database server would be one more thing to back
+up, patch and monitor for no measurable gain. The whole database is a file on a
+Docker volume; backing it up is `cp`.
 
-### 2.2 Docker e Docker Compose
-
-**Ubuntu/Debian:**
-```bash
-# Remover versões antigas
-sudo apt remove docker docker-engine docker.io containerd runc 2>/dev/null
-
-# Adicionar repositório oficial
-sudo apt update && sudo apt install ca-certificates curl gnupg -y
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-  https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
-  | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-# Instalar Docker Engine + Compose
-sudo apt update
-sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
-
-# Permitir execução sem sudo (requer novo login)
-sudo usermod -aG docker $USER && newgrp docker
-
-# Verificar
-docker --version && docker compose version
-```
-
-**macOS / Windows:**
-Instale o Docker Desktop (https://www.docker.com/products/docker-desktop/). O Docker Compose já está incluso. Após a instalação, reinicie o computador e verifique com `docker --version` e `docker compose version`.
+**The CSRF cookie is `SameSite=Lax`, deliberately.** The frontend (`:3000`) and
+the API (`:4000`) are different origins in the default layout, and `Strict`
+would stop the browser from ever sending the cookie back — login would fail
+with a 403 that looks like a wrong password. Protection comes from the
+double-submit itself: an attacker's page cannot *read* the cookie to echo it in
+the header. Set `COOKIE_SAMESITE=none` (HTTPS only) if you split the two across
+unrelated domains.
 
 ---
 
-### 2.3 Node.js 20 (somente para execução manual)
+## Run it
 
-**Ubuntu/Debian:**
-```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install nodejs -y
-node --version && npm --version
-```
-
-**macOS:**
-```bash
-brew install node@20
-```
-
-**Windows:**
-Baixe o instalador LTS em https://nodejs.org/ (versão 20.x ou superior).
-
----
-
-## 3. Obtendo o Repositório
+You need **Docker**. Nothing else — Node, the database and the build all live
+in the containers.
 
 ```bash
-git clone https://github.com/nerdresolve/nerdportal.git
-cd nerdportal
-```
-
----
-
-## 4. Configuração do Ambiente
-
-Copie o template de variáveis de ambiente e preencha os valores obrigatórios:
-
-```bash
+git clone https://github.com/nerdresolve/NerdPortal.git
+cd NerdPortal
 cp .env.example .env
 ```
 
-Abra o `.env` em um editor de texto e configure:
-
-```env
-# OBRIGATÓRIO — String aleatória de no mínimo 64 caracteres
-# Linux/macOS: openssl rand -hex 32
-SESSION_SECRET=cole_aqui_a_string_gerada
-
-# OPCIONAL — sobrescreve a senha do admin padrão (admin@example.com)
-ADMIN_SEED_PASSWORD=
-
-# OPCIONAL — cria admin@example.com; se vazio, o seed é pulado
-ADMIN_SEED_PASSWORD=
-
-# OBRIGATÓRIO PARA RECUPERAÇÃO DE SENHA VIA E-MAIL
-SMTP_HOST=smtp.seuprovedor.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_REQUIRE_TLS=true
-SMTP_USER=conta@empresa.com.br
-SMTP_PASSWORD=senha_da_conta_ou_app_password
-SMTP_FROM_EMAIL=conta@empresa.com.br
-SMTP_FROM_NAME=Portal do TI
-```
-
-**Gerar `SESSION_SECRET` automaticamente:**
+Two values in `.env` have no default, and the stack will not start without
+them:
 
 ```bash
-# Linux/macOS
-openssl rand -hex 32
-
-# Windows (PowerShell)
--join ((1..64) | ForEach-Object { '{0:x}' -f (Get-Random -Max 16) })
+# a random string, 64+ characters
+SESSION_SECRET=$(openssl rand -hex 32)
+# the first admin's password — there is no built-in default
+ADMIN_SEED_PASSWORD=choose-something-long
 ```
 
-### 4.1 Variáveis opcionais para recuperação de senha
-
-| Variável                        | Obrigatória | Descrição                                               |
-|---------------------------------|-------------|---------------------------------------------------------|
-| `SMTP_HOST`                     | Sim         | Host SMTP do provedor de e-mail                         |
-| `SMTP_PORT`                     | Sim         | Porta SMTP (587 para STARTTLS, 465 para SMTPS)          |
-| `SMTP_SECURE`                   | Sim         | `true` para TLS implícito na conexão inicial            |
-| `SMTP_REQUIRE_TLS`              | Não         | `true` para exigir STARTTLS quando `SMTP_SECURE=false`  |
-| `SMTP_USER`                     | Sim         | Login da conta de envio                                 |
-| `SMTP_PASSWORD`                 | Sim         | Senha da conta ou app password                          |
-| `SMTP_FROM_EMAIL`               | Sim         | Endereço exibido como remetente                         |
-| `SMTP_FROM_NAME`                | Não         | Nome do remetente (sugestão: `Portal do TI`)            |
-| `PASSWORD_RESET_CODE_TTL_MINUTES` | Não       | Tempo de expiração do código (padrão: 15 min)           |
-| `PASSWORD_RESET_TOKEN_TTL_MINUTES` | Não      | Tempo de expiração do token pós-validação (padrão: 15 min) |
-| `PASSWORD_RESET_MAX_ATTEMPTS`   | Não         | Tentativas máximas antes de invalidar o código (padrão: 5) |
-
----
-
-## 5. Execução com Docker (Recomendado)
-
-### 5.1 Construir e iniciar os containers
-
-A partir da raiz do projeto:
+Then:
 
 ```bash
 cd docker
-docker compose --env-file ../.env up --build
+docker compose --env-file ../.env up -d --build
 ```
 
-Na primeira execução, o Docker irá:
-1. Baixar a imagem base (`node:20-alpine`).
-2. Construir os containers do backend e frontend.
-3. Instalar dependências via `npm ci`.
-4. Rodar o container `migrate` (aplica as migrações SQLite e cria o usuário administrador padrão).
-5. Iniciar o backend na porta 4000 após a migração concluir com sucesso.
-6. Iniciar o frontend na porta 3000 após o backend responder saudável (`/api/v1/health`).
-
-O banco SQLite (`itportal.db`) e a pasta de uploads são persistidos em volumes Docker nomeados (`dbdata`, `uploads`) — os dados sobrevivem a `docker compose down` e a rebuilds das imagens.
-
-Para executar em segundo plano (modo daemon):
+The portal comes up at **http://localhost:3000**, the API at
+**http://localhost:4000**. Sign in with `admin@example.com` and the password
+you just set.
 
 ```bash
-docker compose --env-file ../.env up --build -d
-```
-
-### 5.2 Verificar status dos serviços
-
-```bash
-docker compose ps
-```
-
-Saída esperada:
-
-```
-NAME                 STATUS
-itportal_backend     Up (healthy)
-itportal_frontend    Up
-```
-
-> O container `itportal_migrate` aparece como `Exited (0)` — ele roda uma vez (migração + seed) e encerra, isso é esperado.
-
-### 5.3 Acompanhar logs
-
-```bash
-# Todos os serviços
-docker compose logs -f
-
-# Apenas o backend
 docker compose logs -f backend
-
-# Apenas a migração/seed
-docker compose logs migrate
+curl -s http://localhost:4000/api/v1/health
 ```
-
-### 5.4 Parar os serviços
-
-```bash
-# Parar sem remover volumes (preserva dados)
-docker compose down
-
-# Parar e remover volumes (apaga dados do banco)
-docker compose down -v
-```
-
----
-
-## 6. Execução Manual (Sem Docker)
-
-Certifique-se de que Node.js 20+ esteja instalado. O banco de dados é SQLite (arquivo local) — nenhuma instalação de servidor de banco é necessária.
-
-### 6.1 Instalar dependências
-
-```bash
-cd apps/backend && npm install && cd ../..
-cd apps/frontend && npm install && cd ../..
-```
-
-### 6.2 Iniciar o backend
-
-```bash
-cd apps/backend
-export $(grep -v '^#' ../../.env | xargs)
-npm run dev
-```
-
-**Windows (PowerShell):**
-```powershell
-cd apps\backend
-Get-Content ..\..\env | ForEach-Object {
-  if ($_ -match '^([^#][^=]*)=(.*)$') {
-    [Environment]::SetEnvironmentVariable($matches[1], $matches[2])
-  }
-}
-npm run dev
-```
-
-O backend estará disponível em `http://localhost:4000`.
-
-### 6.3 Iniciar o frontend
-
-Em outro terminal:
-
-```bash
-cd apps/frontend
-export $(grep -v '^#' ../../.env | xargs)
-npm run dev
-```
-
-O frontend estará disponível em `http://localhost:3000`.
-
----
-
-## 7. Migração do Banco de Dados
-
-As migrações criam todas as tabelas necessárias. Com Docker, o serviço `migrate` já executa isso **automaticamente** a cada `docker compose up` (é idempotente — seguro rodar mais de uma vez). Os comandos abaixo são para reexecutar manualmente ou para o modo sem Docker.
-
-### 7.1 Via Docker
-
-```bash
-docker compose exec backend node database/migrate.js
-```
-
-### 7.2 Via execução manual
-
-```bash
-cd apps/backend
-export $(grep -v '^#' ../../.env | xargs)
-npm run migrate
-```
-
-Saída esperada:
-
-```
-[OK]   20260329180000_create_users_table.sql
-[OK]   20260329180100_create_sessions_table.sql
-[OK]   20260329180200_create_audit_logs_table.sql
-[OK]   20260329180300_create_announcements_table.sql
-[OK]   20260329180400_create_documents_table.sql
-[OK]   20260329180500_create_systems_table.sql
-[OK]   20260329180600_create_team_members_table.sql
-[OK]   20260329180700_create_metrics_table.sql
-[OK]   20260401000000_add_description_to_team_members.sql
-[OK]   20260401010000_create_password_reset_requests_table.sql
-
-Migrations complete. Applied: 10, Skipped: 0
-```
-
-> As migrações são idempotentes — executar novamente não causa erros; migrações já aplicadas são ignoradas.
-
----
-
-## 8. Criação de Usuários Administrativos
-
-Com Docker, o serviço `migrate` já cria os usuários administrativos automaticamente a cada `docker compose up` (os seeds detectam se o usuário já existe e pulam ou atualizam a senha, conforme o caso). Os comandos abaixo são para reexecutar manualmente ou para o modo sem Docker.
-
-### 8.1 Administrador padrão
-
-Criado sempre, sem configuração adicional. A senha pode ser customizada via `ADMIN_SEED_PASSWORD` no `.env`; se omitida, usa o valor padrão abaixo.
-
-| Campo | Valor                              |
-|-------|-------------------------------------|
-| Email | admin@example.com               |
-| Senha | `ADMIN_SEED_PASSWORD` ou `Admin@ITPortal2026` (padrão) |
-| Papel | admin                                |
-
-> **IMPORTANTE:** Altere a senha padrão imediatamente após o primeiro login.
-
-### 8.2 Usuário adicional (admin@example.com)
-
-Este seed só é executado se a variável `ADMIN_SEED_PASSWORD` estiver definida no `.env` — sem ela, é pulado silenciosamente e nenhuma conta é criada. Não há senha padrão embutida no código.
-
-```env
-ADMIN_SEED_PASSWORD=defina_uma_senha_forte_aqui
-```
-
-| Campo | Valor                              |
-|-------|-------------------------------------|
-| Email | admin@example.com       |
-| Senha | `ADMIN_SEED_PASSWORD` (obrigatória) |
-| Papel | admin                                |
-
-### 8.3 Reexecutar os seeds manualmente
-
-**Via Docker:**
-```bash
-docker compose run --rm migrate
-```
-
-**Via execução manual:**
-```bash
-cd database/seeds
-export $(grep -v '^#' ../../.env | xargs)
-node 001_admin_user.js
-node 002_admin_user_user.js
-```
-
----
-
-## 9. Acessando o Sistema
-
-### 9.1 Acesso público
-
-1. Acesse `http://localhost:3000`.
-2. Todas as páginas (Dashboard, Comunicados, Documentos, Equipe, Sistemas, Chamados) são visíveis sem autenticação.
-
-### 9.2 Acesso administrativo
-
-1. Acesse `http://localhost:3000/login`.
-2. Informe as credenciais do administrador (somente usuários com `role = admin` são aceitos).
-3. Após o login, controles de criação, edição e exclusão são exibidos nas páginas.
-4. Upload de foto de membro da equipe aceita JPG, PNG, WEBP ou GIF com limite de 2 MB.
-
-### 9.3 Recuperação de senha
-
-1. Acesse `http://localhost:3000/recuperar-senha`.
-2. Informe o e-mail administrativo e solicite o código.
-3. O sistema enviará um código por e-mail (requer variáveis SMTP configuradas).
-4. Valide o código e defina uma nova senha.
-
-### 9.4 Portas dos serviços
-
-| Serviço    | URL                                 |
-|------------|-------------------------------------|
-| Frontend   | http://localhost:3000               |
-| Backend    | http://localhost:4000               |
-| API Health | http://localhost:4000/api/v1/health |
-
-**Verificação rápida da API:**
-
-```bash
-curl http://localhost:4000/api/v1/health
-```
-
-Resposta esperada:
 
 ```json
-{
-  "success": true,
-  "data": {
-    "status": "ok",
-    "timestamp": "2026-04-01T00:00:00.000Z"
-  }
-}
+{ "success": true, "data": { "status": "ok", "timestamp": "..." } }
 ```
 
----
+### Without Docker, for development
 
-## 10. Estrutura do Projeto
-
-```
-nerdportal/
-  apps/
-    backend/                      API REST (Node.js / Express)
-      controllers/                Lógica de negócio por módulo
-        auth.controller.js        Login, logout, sessão, recuperação de senha
-        announcements.controller.js
-        documents.controller.js   Upload/download seguro
-        metrics.controller.js
-        systems.controller.js
-        team.controller.js
-      dal/                        Data Access Layer (SQL parametrizado)
-        db.js                     Conexão SQLite (better-sqlite3)
-        users.dal.js
-        audit.dal.js
-        announcements.dal.js
-        documents.dal.js
-        metrics.dal.js
-        systems.dal.js
-        team.dal.js
-        password-reset.dal.js
-      middlewares/                Stack de segurança (9 middlewares)
-        securityHeaders.js        Helmet.js (CSP, HSTS, X-Frame-Options)
-        cors.js                   CORS com whitelist de origens
-        csrf.js                   Double-submit cookie + timingSafeEqual
-        rateLimit.js              10 req/15min auth, 100 req/min API geral
-        session.js                SQLite session store
-        auth.js                   requireAuth, requireRole
-        xssSanitizer.js           Sanitização recursiva de inputs
-        audit.js                  Log automático de mutações
-        upload.js                 Multer com filenames aleatórios
-      routes/                     Definição de rotas REST
-      services/                   Serviços de e-mail e upload
-      src/
-        server.js                 Entry point do Express
-      database/
-        migrate.js                Runner de migrações SQL
-      tests/                      Suite de testes automatizados (Jest + Supertest)
-      Dockerfile                   Build multi-stage de produção
-      docker-entrypoint.sh         Ajusta permissões dos volumes e roda como usuário non-root
-      package.json
-
-    frontend/                     Interface web (Next.js 14 / SSR)
-      components/                 Componentes reutilizáveis
-        Header/                   Logo, navegação, usuário logado
-        Sidebar/                  Menu lateral com ícones SVG
-        Footer/                   Copyright e versão
-        Layout/                   Shell composto (Header + Sidebar + Footer)
-      pages/                      Páginas SSR (getServerSideProps)
-        _app.js                   Provider global
-        _document.js              HTML base (favicon, meta)
-        login.js                  Autenticação administrativa
-        recuperar-senha.js        Recuperação de senha por código via e-mail
-        index.js                  Home institucional
-        dashboard.js              Métricas por categoria
-        comunicados.js            Lista paginada de comunicados
-        documentos.js             Repositório com filtro e download
-        equipe.js                 Diretório de membros com foto
-        sistemas.js               Catálogo com filtros e badges de status
-        chamados.js               Orientação para abertura de chamados
-      services/
-        api.js                    Camada de fetch (client-side + SSR)
-        auth.js                   Guards SSR e utilitários de papel
-      styles/                     CSS Modules + variáveis globais de marca
-      public/                     Assets estáticos (logo, favicon)
-      next.config.js
-      Dockerfile
-      package.json
-
-  database/
-    migrations/                   Arquivos SQL sequenciais de schema e evolução
-    seeds/                        Seed do usuário administrador inicial
-
-  docker/
-    docker-compose.yml            Orquestração (migrate + backend + frontend)
-
-  .dockerignore                   Exclusões do build context do backend (raiz do monorepo)
-  .env.example                    Template de variáveis de ambiente
-  .gitignore
+```bash
+cd apps/backend  && npm install && npm run migrate && npm run dev
+cd apps/frontend && npm install && npm run dev
 ```
 
-> O banco SQLite (`itportal.db`) e a pasta `uploads/` são persistidos em volumes Docker nomeados (`dbdata`, `uploads`), não em diretórios do host — use `docker compose down -v` para removê-los.
+`better-sqlite3` compiles a native module, so this path needs a C++ toolchain
+(`build-essential` on Debian, Xcode CLT on macOS, Visual Studio Build Tools on
+Windows). If that sounds like a bad afternoon, use Docker.
+
+### Tests
+
+```bash
+cd apps/backend && npm install && npm test
+```
+
+120 tests covering authentication, authorization, CSRF, session storage, upload
+path traversal, XSS sanitizing and the full password-reset flow.
 
 ---
 
-## 11. Endpoints da API
+## Make it yours
 
-Base URL: `http://localhost:4000/api/v1`
+The portal should wear your face, not NerdResolve's. **One file does it:**
+[`apps/frontend/brand.config.js`](apps/frontend/brand.config.js).
 
-### Autenticação
+```js
+const brand = {
+  name: "NerdPortal",
+  organization: "NerdResolve",
+  tagline: "The IT department's front door...",
 
-| Método | Rota                           | Autenticação | Descrição                                        |
-|--------|--------------------------------|--------------|--------------------------------------------------|
-| POST   | /auth/login                    | Nenhuma      | Autenticar usuário administrativo                |
-| POST   | /auth/logout                   | Obrigatória  | Encerrar sessão                                  |
-| GET    | /auth/me                       | Nenhuma      | Dados da sessão atual                            |
-| POST   | /auth/password-reset/request   | Nenhuma      | Solicitar código de recuperação por e-mail       |
-| POST   | /auth/password-reset/verify    | Nenhuma      | Validar código e liberar token de redefinição    |
-| POST   | /auth/password-reset/confirm   | Nenhuma      | Definir nova senha após validação do código      |
+  logo: "/logo.svg",
+  favicon: "/favicon.svg",
 
-### Comunicados
+  colors: {
+    primary: "#7C3AED",     // buttons, links, headings, active nav
+    accent:  "#A855F7",     // badges, chart accents
+    // ...semantic and neutral colors
+  },
 
-| Método | Rota                | Permissão | Descrição             |
-|--------|---------------------|-----------|-----------------------|
-| GET    | /announcements      | Pública   | Listar (paginado)     |
-| GET    | /announcements/:id  | Pública   | Detalhe               |
-| POST   | /announcements      | admin     | Criar                 |
-| PUT    | /announcements/:id  | admin     | Atualizar             |
-| DELETE | /announcements/:id  | admin     | Remover (soft delete) |
+  fonts: { primary: '"Manrope", ...' },
 
-### Documentos
+  support: { email: "it@example.com", phone: "...", hours: "..." },
+};
+```
 
-| Método | Rota                       | Permissão | Descrição            |
-|--------|----------------------------|-----------|----------------------|
-| GET    | /documents                 | Pública   | Listar (paginado)    |
-| GET    | /documents/:id             | Pública   | Metadados            |
-| GET    | /documents/:id/download    | Pública   | Download do arquivo  |
-| POST   | /documents                 | admin     | Upload (multipart)   |
-| DELETE | /documents/:id             | admin     | Remover              |
+Every color becomes a CSS custom property at render time, so changing `primary`
+repaints buttons, links, headings, focus rings, badges, the active sidebar item
+and the login panel together. There is no stylesheet to hunt through.
 
-### Sistemas
+| To change | Do this |
+|---|---|
+| Name in the header, tab title, emails | `name` and `organization` |
+| Every accent color in the UI | `colors.primary` and `colors.accent` |
+| The logo | replace `apps/frontend/public/logo.svg` (and `logo-dark.svg` for the login panel) |
+| The favicon | replace `apps/frontend/public/favicon.svg` |
+| Typeface | `fonts.primary`, plus the `<link>` in `pages/_document.js` if it is a webfont |
+| Support contact on the Support page | the `support` block |
 
-| Método | Rota           | Permissão | Descrição             |
-|--------|----------------|-----------|-----------------------|
-| GET    | /systems       | Pública   | Listar (filtrável)    |
-| GET    | /systems/:id   | Pública   | Detalhe               |
-| POST   | /systems       | admin     | Criar                 |
-| PUT    | /systems/:id   | admin     | Atualizar             |
-| DELETE | /systems/:id   | admin     | Remover (soft delete) |
-
-### Equipe
-
-| Método | Rota                    | Permissão | Descrição                                  |
-|--------|-------------------------|-----------|--------------------------------------------|
-| GET    | /team                   | Pública   | Listar membros ativos                      |
-| GET    | /team/:id               | Pública   | Detalhe                                    |
-| GET    | /team/photos/:filename  | Pública   | Servir foto do membro                      |
-| POST   | /team                   | admin     | Criar (JSON ou multipart com foto)         |
-| PUT    | /team/:id               | admin     | Atualizar (JSON ou multipart com foto)     |
-| DELETE | /team/:id               | admin     | Remover (soft delete)                      |
-
-### Métricas
-
-| Método | Rota          | Permissão | Descrição          |
-|--------|---------------|-----------|--------------------|
-| GET    | /metrics      | Pública   | Listar (filtrável) |
-| GET    | /metrics/:id  | Pública   | Detalhe            |
-| POST   | /metrics      | admin     | Criar              |
-| PUT    | /metrics/:id  | admin     | Atualizar          |
-| DELETE | /metrics/:id  | admin     | Remover            |
-
-### Utilitários
-
-| Método | Rota    | Autenticação | Descrição              |
-|--------|---------|--------------|------------------------|
-| GET    | /health | Nenhuma      | Verificação de saúde   |
+The values shipped in the file are NerdResolve's own identity — that is the
+"vanilla" look in the screenshots above.
 
 ---
 
-## 12. Modelo de Acesso e Segurança
+## Configure
 
-### Modelo: Leitura Pública / Escrita Restrita
+Everything else comes from the environment. No credential has a default in the
+code, and `.env` is gitignored.
 
-Todo o conteúdo é acessível publicamente via GET sem autenticação. Operações de escrita (POST, PUT, DELETE) exigem sessão administrativa válida.
-
-| Operação | Acesso  | Proteção                        |
-|----------|---------|---------------------------------|
-| GET      | Público | Nenhuma autenticação necessária |
-| POST     | Admin   | `requireRole("admin")` + CSRF   |
-| PUT      | Admin   | `requireRole("admin")` + CSRF   |
-| DELETE   | Admin   | `requireRole("admin")` + CSRF   |
-
-O frontend renderiza controles de edição condicionalmente: apenas quando o usuário está autenticado como `admin`. Visitantes públicos visualizam apenas o conteúdo de leitura.
-
-### Medidas de Segurança Implementadas
-
-| Medida                    | Implementação                                                          |
-|---------------------------|------------------------------------------------------------------------|
-| Hash de senha             | bcrypt com fator de custo 12                                           |
-| Gerenciamento de sessão   | Cookies HttpOnly, SameSite=Strict, armazenados no SQLite               |
-| Prevenção de SQL Injection | Queries 100% parametrizadas via `better-sqlite3` — nenhuma concatenação |
-| Proteção contra XSS       | Middleware de sanitização recursiva + CSP via Helmet.js                |
-| Proteção contra CSRF      | Double-submit cookie com `crypto.timingSafeEqual`                      |
-| Headers de segurança      | Helmet.js (CSP, HSTS 1 ano, X-Frame-Options DENY, X-Content-Type-Options) |
-| Rate limiting             | 10 req/15 min em autenticação; 100 req/min na API geral                |
-| Audit logging             | Todas as mutações registradas com usuário, ação, entidade, IP e timestamp |
-| Upload de arquivos        | Allowlist de MIME types, nomes aleatórios criptograficamente seguros, validação de tamanho |
-| Sessão única admin        | Novo login administrativo invalida sessões admin preexistentes          |
-
----
-
-## 13. Resolução de Problemas
-
-**Backend não inicia / não encontra o banco de dados**
-Confirme que o container `migrate` rodou com sucesso (`docker compose logs migrate`) antes do `backend` subir — o backend depende de `service_completed_successfully` do `migrate`. Sem Docker, confirme que `SQLITE_DB_PATH` aponta para um caminho gravável e que `npm run migrate` foi executado ao menos uma vez.
-
-**Erro `SESSION_SECRET must be set`**
-Preencha `SESSION_SECRET` no `.env` com uma string aleatória de pelo menos 64 caracteres. Gere com `openssl rand -hex 32`.
-
-**Porta 3000 ou 4000 já em uso**
-Altere `FRONTEND_PORT` ou `BACKEND_PORT` no `.env`. Com Docker, execute `docker compose down` antes de reiniciar.
-
-**Migrações falham com `table already exists`**
-As migrações já foram aplicadas. O runner é idempotente e ignora migrações já executadas. Se o erro persistir, verifique a tabela `_migrations` no banco.
-
-**Frontend retorna 401 em todas as páginas**
-O backend pode não estar acessível. Verifique se está rodando na porta 4000 e se `NEXT_PUBLIC_API_URL` e `INTERNAL_API_URL` estão corretos no `.env`.
-
-**better-sqlite3 falha na instalação (erro de compilação)**
-`better-sqlite3` requer ferramentas de compilação nativas ao instalar via `npm install` fora do Docker (dentro do Docker, o Dockerfile já instala `python3 make g++`).
-- Linux: `sudo apt install build-essential python3`
-- macOS: `xcode-select --install`
-- Windows: instale as Build Tools do Visual Studio
-
-**Recuperação de senha não envia e-mail**
-Verifique se as variáveis `SMTP_*` estão preenchidas corretamente no `.env`. Teste a conexão SMTP com um cliente de e-mail antes de subir o backend.
-
----
-
-## 14. Configuração para Produção com Domínio Próprio
-
-Quando o portal for publicado em um servidor com domínio definido (ex: `portal.example.com`), os seguintes pontos precisam ser atualizados.
-
-### 14.1 Variáveis de ambiente (arquivo `.env`)
-
-| Variável | Valor atual (dev) | O que colocar em produção |
+| Variable | Required | What it is |
 |---|---|---|
-| `FRONTEND_URL` | `http://localhost:3000` | `https://portal.example.com` |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:4000/api/v1` | URL pública da API (ex: `https://api.portal.example.com/api/v1`) |
-| `INTERNAL_API_URL` | `http://localhost:4000/api/v1` | URL interna do container backend (ex: `http://backend:4000/api/v1` no Docker) |
-| `ALLOWED_ORIGINS` | *(vazio)* | `https://portal.example.com` |
-| `NODE_ENV` | `production` | `production` (já correto) |
-
-**`FRONTEND_URL`** é usada pelo backend para montar o link de redefinição de senha que aparece no e-mail. Se esse valor estiver errado, o link no e-mail apontará para localhost em vez do domínio real.
-
-### 14.2 Link no e-mail de recuperação de senha
-
-**Arquivo:** `apps/backend/services/password-reset.js`
-
-```js
-const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, "");
-```
-
-O link é construído automaticamente a partir de `FRONTEND_URL`. Basta atualizar essa variável no `.env` — nenhuma alteração de código é necessária.
-
-### 14.3 CORS — origens permitidas
-
-**Arquivo:** `apps/backend/middlewares/cors.js`
-
-```js
-const defaultOrigins = ["http://localhost:3000", "http://itportal_frontend:3000"];
-const envOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean)
-  : [];
-```
-
-Adicione o domínio do frontend na variável `ALLOWED_ORIGINS` do `.env`:
-
-```
-ALLOWED_ORIGINS=https://portal.example.com
-```
-
-Se houver mais de um domínio, separe por vírgula:
-
-```
-ALLOWED_ORIGINS=https://portal.example.com,https://www.portal.example.com
-```
-
-### 14.4 Cookie de sessão (HTTPS obrigatório em produção)
-
-**Arquivo:** `apps/backend/middlewares/session.js`
-
-O cookie de sessão já tem `secure: true` quando `NODE_ENV=production`. Isso exige que o frontend e a API estejam servidos via **HTTPS**. Use Let's Encrypt com Nginx ou Caddy como reverse proxy na frente do Node.js.
-
-### 14.5 URLs no frontend
-
-**Arquivo:** `apps/frontend/.env.local`
-
-```
-NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
-INTERNAL_API_URL=http://localhost:4000/api/v1
-```
-
-Atualize ambas para os valores de produção antes de fazer o build (`npm run build`). O `NEXT_PUBLIC_API_URL` é embutido no bundle durante o build — não basta alterar em runtime.
-
-### Checklist de deploy
-
-- [ ] Configurar DNS apontando o domínio para o IP do servidor
-- [ ] Instalar certificado SSL (HTTPS) via Let's Encrypt ou similar
-- [ ] Atualizar `FRONTEND_URL` no `.env` com o domínio real
-- [ ] Atualizar `NEXT_PUBLIC_API_URL` e `INTERNAL_API_URL` no `.env` e em `apps/frontend/.env.local`
-- [ ] Preencher `ALLOWED_ORIGINS` no `.env` com o domínio do frontend
-- [ ] Confirmar `NODE_ENV=production` no `.env`
-- [ ] Fazer build do frontend: `cd apps/frontend && npm run build`
-- [ ] Reiniciar o backend para carregar as novas variáveis
+| `SESSION_SECRET` | yes | Session signing key, 64+ random characters |
+| `ADMIN_SEED_PASSWORD` | yes | First admin's password. Empty = the seed refuses to run |
+| `ADMIN_SEED_EMAIL` | — | Defaults to `admin@example.com` |
+| `ADMIN_SEED_NAME` | — | Defaults to `IT Administrator` |
+| `SQLITE_DB_PATH` | — | Ignored under Docker (always `/data/nerdportal.db`) |
+| `BCRYPT_ROUNDS` | — | Password hashing cost. Default `12` |
+| `COOKIE_SAMESITE` | — | `lax` (default), or `none` for unrelated domains over HTTPS |
+| `ALLOWED_ORIGINS` | — | Extra CORS origins, comma separated |
+| `FRONTEND_URL` | — | Used to build the link in reset emails |
+| `NEXT_PUBLIC_API_URL` | — | API URL the **browser** calls |
+| `INTERNAL_API_URL` | — | API URL the Next.js server calls during SSR |
+| `SMTP_HOST` `SMTP_PORT` `SMTP_USER` `SMTP_PASSWORD` `SMTP_FROM_EMAIL` | for reset | Password recovery stays disabled until these are set |
+| `PASSWORD_RESET_CODE_TTL_MINUTES` | — | Code lifetime. Default `15` |
+| `PASSWORD_RESET_MAX_ATTEMPTS` | — | Wrong codes before lockout. Default `5` |
 
 ---
 
-NerdResolve — Tecnologia da Informação
-Portal do TI v1.0.0
+## Under the hood
+
+```
+apps/
+  backend/
+    src/server.js       middleware order: helmet, CORS, session, XSS, CSRF, routes
+    routes/             one file per resource, role guards declared here
+    controllers/        request shape in, response shape out
+    dal/                every SQL statement lives here, parameterized
+    middlewares/        auth, csrf, rateLimit, securityHeaders, upload, xssSanitizer
+    services/           email (hand-rolled SMTP), password reset, uploads
+    tests/              120 unit + integration tests
+  frontend/
+    brand.config.js     >>> the one file you edit to rebrand <<<
+    components/         Header, Sidebar, Footer, Layout, BrandStyles
+    pages/              one file per screen
+    styles/             CSS modules + globals.css (design tokens)
+database/
+  migrations/           numbered, idempotent, applied in order
+  seeds/                the first admin, and nothing else
+```
+
+The `dal/` boundary is what keeps SQL out of the controllers: every query is a
+prepared statement with bound parameters, so a route handler has no way to
+build a string that reaches the database.
+
+---
+
+## Security
+
+What is actually implemented, so you can judge it rather than trust a badge:
+
+- **Passwords** — bcrypt, cost 12, never logged. Minimum 12 characters with
+  upper, lower and a digit, enforced server-side.
+- **Sessions** — httpOnly cookie, 8-hour rolling expiry, stored in SQLite
+  (survives a restart; revocable by deleting a row).
+- **CSRF** — double-submit token on every non-GET request.
+- **Rate limiting** — per-IP on login and on each password-reset step.
+- **Uploads** — extension and MIME allowlist, size cap, filenames sanitized,
+  and every resolved path checked to be inside the uploads directory before a
+  write. Path traversal is covered by tests.
+- **XSS** — request bodies sanitized on the way in; credential fields are
+  exempted deliberately (they are compared as opaque values, never rendered).
+- **Headers** — helmet, with `X-Frame-Options: DENY` and `nosniff` on the
+  frontend too.
+- **Audit log** — every mutation records actor, action, target and IP.
+
+**What it does not do.** There is no SSO or LDAP integration; accounts are
+local. There is no per-record permission model — a role is `admin`, `editor` or
+`viewer`, and that is the whole matrix. Serve it behind HTTPS: `secure` cookies
+switch on with `NODE_ENV=production`, and without TLS in front, session cookies
+cross the network in the clear.
+
+---
+
+## Known limitations
+
+- **SQLite means one writer.** Fine for a few hundred readers and a handful of
+  editors; not a choice for a portal serving tens of thousands.
+- **Uploads live on a Docker volume**, not object storage. Back up the volume.
+- **The UI ships in English only.** Strings are inline in the components —
+  there is no i18n layer yet.
+- **Dates are formatted `en-US`** and rendered from date-only values, so a
+  period can read one day off in timezones far from UTC.
+
+---
+
+## License
+
+MIT. Use it, fork it, sell it, rebrand it — see [LICENSE](LICENSE).
+
+Built by [NerdResolve](https://github.com/nerdresolve).

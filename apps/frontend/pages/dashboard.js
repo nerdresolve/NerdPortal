@@ -19,9 +19,9 @@ export async function getServerSideProps(context) {
     ]);
     user = resolvedUser;
     if (result.success) metrics = result.data.items || [];
-    else loadError = result.error || "Não foi possível carregar as métricas no momento.";
+    else loadError = result.error || "Could not load metrics at this time.";
   } catch (e) {
-    loadError = "Não foi possível carregar as métricas no momento.";
+    loadError = "Could not load metrics at this time.";
   }
 
   return {
@@ -50,33 +50,33 @@ function getLatestPerKpi(metrics) {
 }
 
 const CATEGORY_LABELS = {
-  operational: "Operacional",
-  security: "Segurança",
+  operational: "Operational",
+  security: "Security",
   performance: "Performance",
-  financial: "Financeiro",
+  financial: "Financial",
 };
 
 const CATEGORY_COLORS = {
   operational: "var(--color-primary)",
   security: "var(--color-error)",
   performance: "var(--color-accent)",
-  financial: "var(--verde-70)",
+  financial: "var(--color-primary-light)",
 };
 
 function formatValue(value, unit) {
   const num = parseFloat(value);
   if (unit === "percent") return `${num.toFixed(1)}%`;
-  if (unit === "currency") return `R$ ${num.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+  if (unit === "currency") return `$${num.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
   if (unit === "seconds") return `${num.toFixed(1)}s`;
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
   if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-  return num.toLocaleString("pt-BR");
+  return num.toLocaleString("en-US");
 }
 
 function isoToDisplay(isoDate) {
   if (!isoDate) return "";
   const [y, m, d] = isoDate.split("-");
-  return `${d}/${m}/${y}`;
+  return `${m}/${d}/${y}`;
 }
 
 const EMPTY_FORM = {
@@ -120,11 +120,11 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
         setMetrics(result.data.items || []);
         setPageError("");
       } else {
-        setPageError(result?.error || "Não foi possível recarregar as métricas.");
+        setPageError(result?.error || "Could not reload metrics.");
       }
     } catch (e) {
-      setPageError("Não foi possível recarregar as métricas.");
-      console.error("Erro ao recarregar métricas:", e);
+      setPageError("Could not reload metrics.");
+      console.error("Error reloading metrics:", e);
     }
   }
 
@@ -151,7 +151,7 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
   }
 
   function closeModal() {
-    if (formTouched && !confirm("Existem alterações não salvas. Deseja sair sem salvar?")) return;
+    if (formTouched && !confirm("There are unsaved changes. Do you want to leave without saving?")) return;
     setShowModal(false);
     setEditItem(null);
     setFormTouched(false);
@@ -168,12 +168,12 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
 
     if (modalMode === "create") {
       if (!form.kpiName.trim() || form.kpiValue === "" || !form.periodStart || !form.periodEnd) {
-        setFormError("Nome, valor, início e fim do período são obrigatórios.");
+        setFormError("Name, value, period start and period end are required.");
         return;
       }
     } else {
       if (form.kpiValue === "") {
-        setFormError("Valor é obrigatório.");
+        setFormError("Value is required.");
         return;
       }
     }
@@ -201,34 +201,34 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
       }
 
       if (!result || !result.success) {
-        setFormError(result?.error || "Erro ao salvar. Verifique os dados e tente novamente.");
+        setFormError(result?.error || "Error saving. Check the data and try again.");
         return;
       }
       setFormTouched(false);
       setShowModal(false);
-      showToast(modalMode === "create" ? "Métrica criada com sucesso." : "Métrica atualizada com sucesso.");
+      showToast(modalMode === "create" ? "Metric created successfully." : "Metric updated successfully.");
       await reload();
     } catch (err) {
-      console.error("Erro ao salvar métrica:", err);
-      setFormError("Erro de conexão. Verifique a rede e tente novamente.");
+      console.error("Error saving metric:", err);
+      setFormError("Connection error. Check your network and try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   async function handleDelete(id) {
-    if (!confirm("Confirmar exclusão desta métrica?")) return;
+    if (!confirm("Delete this metric?")) return;
     try {
       const result = await deleteMetric(id);
       if (!result || !result.success) {
-        showToast(result?.error || "Erro ao excluir métrica.", "error");
+        showToast(result?.error || "Error deleting metric.", "error");
         return;
       }
-      showToast("Métrica excluída com sucesso.");
+      showToast("Metric deleted successfully.");
       await reload();
     } catch (err) {
-      console.error("Erro ao excluir métrica:", err);
-      showToast("Erro de conexão ao excluir.", "error");
+      console.error("Error deleting metric:", err);
+      showToast("Connection error while deleting.", "error");
     }
   }
 
@@ -239,7 +239,7 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
   return (
     <>
       <Head>
-        <title>Portal do TI | Dashboard</title>
+        <title>NerdPortal | Dashboard</title>
       </Head>
 
       <Layout user={user}>
@@ -249,14 +249,14 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
 
         <section className={styles.header}>
           <div>
-            <h1 className={styles.title}>Dashboard de Métricas</h1>
+            <h1 className={styles.title}>Metrics Dashboard</h1>
             <p className={styles.subtitle}>
-              Visão consolidada dos indicadores de TI por categoria.
+              Consolidated view of IT indicators by category.
             </p>
           </div>
           {isAdmin && (
             <button type="button" className="btn btn-primary" onClick={openCreate}>
-              + Nova Métrica
+              + New Metric
             </button>
           )}
         </section>
@@ -274,9 +274,9 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
                   </span>
                   <span className={styles.kpiName}>{kpi.kpi_name}</span>
                   <span className={styles.kpiPeriod}>
-                    {new Date(kpi.period_start).toLocaleDateString("pt-BR")}
+                    {new Date(kpi.period_start).toLocaleDateString("en-US")}
                     {" → "}
-                    {new Date(kpi.period_end).toLocaleDateString("pt-BR")}
+                    {new Date(kpi.period_end).toLocaleDateString("en-US")}
                   </span>
                 </div>
               </div>
@@ -285,7 +285,7 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
         )}
         {categories.length === 0 ? (
           <div className={`card ${styles.emptyState}`}>
-            <p>{pageError || `Nenhuma métrica registrada.${isAdmin ? " Adicione KPIs usando o botão acima." : ""}`}</p>
+            <p>{pageError || `No metrics recorded.${isAdmin ? " Add KPIs using the button above." : ""}`}</p>
           </div>
         ) : (
           categories.map((cat) => (
@@ -299,7 +299,7 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
                   {CATEGORY_LABELS[cat] || cat}
                 </h2>
                 <span className={styles.categoryCount}>
-                  {grouped[cat].length} registro{grouped[cat].length !== 1 ? "s" : ""}
+                  {grouped[cat].length} record{grouped[cat].length !== 1 ? "s" : ""}
                 </span>
               </div>
 
@@ -307,12 +307,12 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Indicador</th>
-                      <th>Valor</th>
-                      <th>Período</th>
-                      <th>Responsável</th>
-                      <th>Atualizado</th>
-                      {isAdmin && <th>Ações</th>}
+                      <th>Indicator</th>
+                      <th>Value</th>
+                      <th>Period</th>
+                      <th>Owner</th>
+                      <th>Updated</th>
+                      {isAdmin && <th>Actions</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -328,12 +328,12 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
                           {formatValue(m.kpi_value, m.kpi_unit)}
                         </td>
                         <td>
-                          {new Date(m.period_start).toLocaleDateString("pt-BR")}
+                          {new Date(m.period_start).toLocaleDateString("en-US")}
                           {" → "}
-                          {new Date(m.period_end).toLocaleDateString("pt-BR")}
+                          {new Date(m.period_end).toLocaleDateString("en-US")}
                         </td>
                         <td>{m.created_by_name || "-"}</td>
-                        <td>{new Date(m.updated_at).toLocaleDateString("pt-BR")}</td>
+                        <td>{new Date(m.updated_at).toLocaleDateString("en-US")}</td>
                         {isAdmin && (
                           <td>
                             <div style={{ display: "flex", gap: "var(--space-2)" }}>
@@ -342,14 +342,14 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
                                 className="btn btn-outline btn-sm"
                                 onClick={() => openEdit(m)}
                               >
-                                Editar
+                                Edit
                               </button>
                               <button
                                 type="button"
                                 className="btn btn-danger btn-sm"
                                 onClick={() => handleDelete(m.id)}
                               >
-                                Excluir
+                                Delete
                               </button>
                             </div>
                           </td>
@@ -368,7 +368,7 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">
-                {modalMode === "create" ? "Nova Métrica" : `Editar: ${editItem?.kpi_name}`}
+                {modalMode === "create" ? "New Metric" : `Edit: ${editItem?.kpi_name}`}
               </h2>
               <button type="button" className="modal-close" onClick={closeModal}>
                 &times;
@@ -382,33 +382,33 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
                 <>
                   <div className="form-row">
                     <div className="form-group">
-                      <label className="form-label">Nome do Indicador *</label>
+                      <label className="form-label">Indicator Name *</label>
                       <input
                         className="form-input"
                         type="text"
                         value={form.kpiName}
                         onChange={(e) => setField("kpiName", e.target.value)}
-                        placeholder="ex: Uptime Sistemas"
+                        placeholder="e.g. Systems Uptime"
                       />
                     </div>
                     <div className="form-group">
-                      <label className="form-label">Categoria</label>
+                      <label className="form-label">Category</label>
                       <select
                         className="form-input"
                         value={form.category}
                         onChange={(e) => setField("category", e.target.value)}
                       >
-                        <option value="operational">Operacional</option>
-                        <option value="security">Segurança</option>
+                        <option value="operational">Operational</option>
+                        <option value="security">Security</option>
                         <option value="performance">Performance</option>
-                        <option value="financial">Financeiro</option>
+                        <option value="financial">Financial</option>
                       </select>
                     </div>
                   </div>
 
                   <div className="form-row">
                     <div className="form-group">
-                      <label className="form-label">Início do Período *</label>
+                      <label className="form-label">Period Start *</label>
                       <input
                         className="form-input"
                         type="date"
@@ -422,7 +422,7 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
                       )}
                     </div>
                     <div className="form-group">
-                      <label className="form-label">Fim do Período *</label>
+                      <label className="form-label">Period End *</label>
                       <input
                         className="form-input"
                         type="date"
@@ -441,7 +441,7 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
 
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Valor *</label>
+                  <label className="form-label">Value *</label>
                   <input
                     className="form-input"
                     type="number"
@@ -452,40 +452,40 @@ export default function DashboardPage({ user, initialMetrics, initialLoadError }
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Unidade</label>
+                  <label className="form-label">Unit</label>
                   <select
                     className="form-input"
                     value={form.kpiUnit}
                     onChange={(e) => setField("kpiUnit", e.target.value)}
                   >
-                    <option value="count">Contagem</option>
-                    <option value="percent">Percentual (%)</option>
-                    <option value="currency">Moeda (R$)</option>
-                    <option value="seconds">Segundos</option>
-                    <option value="hours">Horas</option>
-                    <option value="days">Dias</option>
+                    <option value="count">Count</option>
+                    <option value="percent">Percentage (%)</option>
+                    <option value="currency">Currency ($)</option>
+                    <option value="seconds">Seconds</option>
+                    <option value="hours">Hours</option>
+                    <option value="days">Days</option>
                   </select>
                 </div>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Observações</label>
+                <label className="form-label">Notes</label>
                 <textarea
                   className="form-input"
                   rows={3}
                   value={form.notes}
                   onChange={(e) => setField("notes", e.target.value)}
-                  placeholder="Notas ou contexto sobre este indicador"
+                  placeholder="Notes or context about this indicator"
                   style={{ resize: "vertical" }}
                 />
               </div>
 
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline" onClick={closeModal} disabled={submitting}>
-                  Cancelar
+                  Cancel
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? "Salvando..." : modalMode === "create" ? "Criar" : "Salvar alterações"}
+                  {submitting ? "Saving..." : modalMode === "create" ? "Create" : "Save changes"}
                 </button>
               </div>
             </form>

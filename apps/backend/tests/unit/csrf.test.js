@@ -33,7 +33,10 @@ describe('CSRF middleware', () => {
       expect(res.cookie).toHaveBeenCalledWith(
         CSRF_COOKIE,
         expect.stringMatching(/^[0-9a-f]{64}$/),
-        expect.objectContaining({ httpOnly: false, sameSite: 'strict' })
+        // "lax", not "strict": the frontend and the API are separate origins in
+        // the default deployment, and "strict" would stop the browser sending
+        // the cookie back at all. The double-submit header is what stops CSRF.
+        expect.objectContaining({ httpOnly: false, sameSite: 'lax' })
       );
     });
 

@@ -92,7 +92,7 @@ describe('Security headers', () => {
     expect(res.headers['x-powered-by']).toBeUndefined();
   });
 
-  test('CSRF cookie is set with sameSite strict', async () => {
+  test('CSRF cookie is set with sameSite lax', async () => {
     const res = await supertest(app)
       .get('/api/v1/announcements')
       .set('Origin', 'http://localhost:3000');
@@ -100,7 +100,11 @@ describe('Security headers', () => {
     const cookies = res.headers['set-cookie'] || [];
     const csrfCookie = cookies.find((c) => c.startsWith('csrf_token='));
     expect(csrfCookie).toBeDefined();
-    expect(csrfCookie.toLowerCase()).toMatch(/samesite=strict/);
+    // "lax", not "strict": the frontend is served from a different origin
+    // than the API in the default deployment, and "strict" would stop the
+    // browser from ever sending this cookie back. The token still has to be
+    // echoed in the X-CSRF-Token header, which is what blocks CSRF.
+    expect(csrfCookie.toLowerCase()).toMatch(/samesite=lax/);
   });
 
   test('CSRF cookie is not httpOnly (must be readable by frontend JS)', async () => {

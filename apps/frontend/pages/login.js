@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import { login, getMe } from "../services/api";
+import brand from "../brand.config";
 import styles from "../styles/Login.module.css";
 
 export async function getServerSideProps(context) {
@@ -37,10 +38,10 @@ export default function LoginPage() {
       if (result.success) {
         router.push("/");
       } else {
-        setError(result.error || "Falha na autenticação.");
+        setError(result.error || "Authentication failed.");
       }
     } catch (err) {
-      setError("Erro de conexão com o servidor.");
+      setError("Could not connect to the server.");
     } finally {
       setLoading(false);
     }
@@ -49,16 +50,16 @@ export default function LoginPage() {
   return (
     <>
       <Head>
-        <title>Portal do TI | Login</title>
+        <title>{`${brand.name} | Sign in`}</title>
       </Head>
 
       <div className={styles.container}>
         <div className={styles.brandPanel}>
           <div className={styles.brandContent}>
-            <img src="/logo.webp" alt="NerdResolve" className={styles.brandLogo} />
-            <h1 className={styles.brandTitle}>Portal do TI</h1>
+            <img src="/logo-dark.svg" alt={brand.logoAlt} className={styles.brandLogo} />
+            <h1 className={styles.brandTitle}>{brand.name}</h1>
             <p className={styles.brandSubtitle}>
-              Portal de Tecnologia da Informação
+              {brand.tagline}
             </p>
           </div>
           <div className={styles.meshContainer}>
@@ -70,15 +71,15 @@ export default function LoginPage() {
         </div>
         <div className={styles.formPanel}>
           <div className={styles.formWrapper}>
-            <h2 className={styles.formTitle}>Acesso ao Sistema</h2>
+            <h2 className={styles.formTitle}>Sign in</h2>
             <p className={styles.formDescription}>
-              Informe suas credenciais para acessar o portal.
+              Enter your credentials to access the portal.
             </p>
 
             <form onSubmit={handleSubmit} className={styles.form}>
               <div className="form-group">
                 <label htmlFor="email" className="form-label">
-                  E-mail
+                  Email
                 </label>
                 <input
                   id="email"
@@ -86,7 +87,7 @@ export default function LoginPage() {
                   className="form-input"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="usuario@example.com"
+                  placeholder="you@example.com"
                   required
                   autoComplete="email"
                 />
@@ -94,7 +95,7 @@ export default function LoginPage() {
 
               <div className="form-group">
                 <label htmlFor="password" className="form-label">
-                  Senha
+                  Password
                 </label>
                 <input
                   id="password"
@@ -102,7 +103,7 @@ export default function LoginPage() {
                   className="form-input"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Digite sua senha"
+                  placeholder="Enter your password"
                   required
                   autoComplete="current-password"
                 />
@@ -117,11 +118,11 @@ export default function LoginPage() {
                 className={`btn btn-primary ${styles.submitBtn}`}
                 disabled={loading}
               >
-                {loading ? "Autenticando..." : "Entrar"}
+                {loading ? "Signing in..." : "Sign in"}
               </button>
 
-              <Link href="/recuperar-senha" className={styles.secondaryLink}>
-                Esqueci minha senha
+              <Link href="/reset-password" className={styles.secondaryLink}>
+                Forgot my password
               </Link>
             </form>
           </div>

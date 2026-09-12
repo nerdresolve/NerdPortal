@@ -1,37 +1,39 @@
-﻿:root {
-  --color-primary: #007B4E;
-  --color-accent: #EAAB00;
+:root {
+  /* ------------------------------------------------------------------
+     These values are injected at runtime from config/brand.config.js
+     by components/BrandStyles.js. The literals below are the fallback
+     used before hydration and by any tooling that reads the CSS alone.
+     Edit config/brand.config.js, not this block.
+     ------------------------------------------------------------------ */
+  --color-primary: #7C3AED;
+  /* RGB channels of the primary, so tints can use color-mix-free alpha. */
+  --color-primary-rgb: 124, 58, 237;
+  --color-accent-rgb: 168, 85, 247;
+  --color-primary-light: #A855F7;
+  --color-primary-dark: #6D28D9;
+  --color-accent: #A855F7;
+  --color-accent-light: #C084FC;
 
-  --verde-70: #629676;
-  --verde-80: #508074;
-  --verde-45: #93B29C;
-  --verde-60: #75A084;
-  --amarelo-80: #F2BA46;
-  --amarelo-65: #F7C66B;
-  --amarelo-45: #FCD798;
-  --color-text-muted: #989AA5;
+  --color-bg: #FFFFFF;
+  --color-bg-alt: #F7F7FA;
+  --color-text: #2E2F35;
+  --color-text-muted: #6B6B76;
+  --color-border: #E4E2E9;
+  --color-success: #0F7A42;
+  --color-error: #DC2626;
+  --color-warning: #D97706;
 
+  /* Neutral ramp, derived from the brand neutrals above. */
   --white: #FFFFFF;
-  --off-white: #F7F8FA;
-  --gray-100: #F0F1F3;
-  --gray-200: #E2E3E7;
-  --gray-300: #C5C7CE;
-  --gray-600: #5A5C66;
-  --gray-800: #2E2F35;
+  --off-white: var(--color-bg-alt);
+  --gray-100: #F1F0F4;
+  --gray-200: var(--color-border);
+  --gray-300: #C7C4CE;
+  --gray-600: var(--color-text-muted);
+  --gray-800: var(--color-text);
   --black: #1A1B1F;
 
-  --color-primary: var(--color-primary);
-  --color-accent: var(--color-accent);
-  --color-bg: var(--white);
-  --color-bg-alt: var(--off-white);
-  --color-text: var(--gray-800);
-  --color-text-muted: var(--color-text-muted);
-  --color-border: var(--gray-200);
-  --color-success: #16A34A;
-  --color-error: #DC2626;
-  --color-warning: var(--color-accent);
-
-  --font-primary: "Lucida Grande", "Lucida Sans", "Lucida Sans Unicode", sans-serif;
+  --font-primary: "Manrope", "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "SF Mono", "Cascadia Code", "Consolas", monospace;
 
   --space-1: 0.25rem;
@@ -93,7 +95,7 @@ a {
 }
 
 a:hover {
-  color: var(--verde-70);
+  color: var(--color-primary-light);
 }
 
 img {
@@ -191,7 +193,7 @@ p {
 }
 
 .btn-primary:hover {
-  background: var(--verde-70);
+  background: var(--color-primary-light);
 }
 
 .btn-accent {
@@ -200,7 +202,7 @@ p {
 }
 
 .btn-accent:hover {
-  background: var(--amarelo-80);
+  background: var(--color-accent-light);
 }
 
 .btn-outline {
@@ -241,7 +243,7 @@ p {
 
 .form-input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(0, 123, 78, 0.12);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.12);
 }
 
 .form-input::placeholder {
@@ -259,12 +261,12 @@ p {
 }
 
 .badge-active {
-  background: rgba(0, 123, 78, 0.1);
+  background: rgba(var(--color-primary-rgb), 0.1);
   color: var(--color-primary);
 }
 
 .badge-maintenance {
-  background: rgba(234, 171, 0, 0.15);
+  background: rgba(var(--color-accent-rgb), 0.15);
   color: #8B6914;
 }
 

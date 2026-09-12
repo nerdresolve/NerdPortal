@@ -1,8 +1,8 @@
 {
-  "name": "itportal-backend",
-  "version": "0.1.0",
+  "name": "nerdportal-backend",
+  "version": "1.0.0",
   "private": true,
-  "description": "ITPortal REST API - NerdResolve",
+  "description": "NerdPortal REST API (Express)",
   "main": "src/server.js",
   "scripts": {
     "dev": "node --watch src/server.js",

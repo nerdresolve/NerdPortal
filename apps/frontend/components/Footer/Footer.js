@@ -1,3 +1,4 @@
+import brand from "../../brand.config";
 import styles from "./Footer.module.css";
 
 export default function Footer() {
@@ -6,9 +7,9 @@ export default function Footer() {
   return (
     <footer className={styles.footer}>
       <span className={styles.copyright}>
-        NerdResolve - Tecnologia da Informação {year}
+        {brand.organization} - {brand.footerNote} {year}
       </span>
-      <span className={styles.version}>Portal do TI v0.1.0</span>
+      <span className={styles.version}>{brand.name} v1.0.0</span>
     </footer>
   );
 }

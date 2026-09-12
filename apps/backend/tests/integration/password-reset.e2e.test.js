@@ -1,6 +1,6 @@
 'use strict';
 
-// Fluxo completo de recuperação de senha: request -> verify -> confirm.
+// Full password recovery flow: request -> verify -> confirm.
 
 jest.mock('../../dal/db', () => ({
   pool: { on: jest.fn() },
@@ -179,7 +179,7 @@ describe('Password reset — full happy path', () => {
     await flushSetImmediate();
     expect(sendEmail).toHaveBeenCalledTimes(1);
     const sentText = sendEmail.mock.calls[0][0].text;
-    const code = sentText.match(/autenticação é: (\d{6})/)[1];
+    const code = sentText.match(/verification code is: (\d{6})/)[1];
 
     const { agent: verifyAgent, csrfToken: verifyCsrf } = await getAgentWithCsrf();
     const verifyRes = await verifyAgent
@@ -215,7 +215,7 @@ describe('Password reset — full happy path', () => {
       .set('X-CSRF-Token', reqCsrf)
       .send({ email: ADMIN_EMAIL });
     await flushSetImmediate();
-    const code = sendEmail.mock.calls[0][0].text.match(/autenticação é: (\d{6})/)[1];
+    const code = sendEmail.mock.calls[0][0].text.match(/verification code is: (\d{6})/)[1];
 
     const { agent: verifyAgent, csrfToken: verifyCsrf } = await getAgentWithCsrf();
     const verifyRes = await verifyAgent
@@ -255,7 +255,7 @@ describe('Password reset — attempt lockout', () => {
       .set('X-CSRF-Token', reqCsrf)
       .send({ email: ADMIN_EMAIL });
     await flushSetImmediate();
-    const realCode = sendEmail.mock.calls[0][0].text.match(/autenticação é: (\d{6})/)[1];
+    const realCode = sendEmail.mock.calls[0][0].text.match(/verification code is: (\d{6})/)[1];
     const wrongCode = realCode === '000000' ? '111111' : '000000';
 
     for (let i = 0; i < maxAttempts; i++) {

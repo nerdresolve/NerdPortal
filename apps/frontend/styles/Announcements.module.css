@@ -33,7 +33,7 @@
 }
 
 .clickableRow:hover td {
-  background: rgba(0, 123, 78, 0.03);
+  background: rgba(var(--color-primary-rgb), 0.03);
 }
 
 .rowTitle {

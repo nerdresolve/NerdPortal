@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { isAdminUser } from "../../services/auth";
 import { logout } from "../../services/api";
+import brand from "../../brand.config";
 import styles from "./Header.module.css";
 
 export default function Header({ user }) {
@@ -16,15 +17,19 @@ export default function Header({ user }) {
   return (
     <header className={styles.header}>
       <div className={styles.left}>
-        <Link href="/">
+        <Link href="/" className={styles.brandLink}>
           <img
-            src="/logo.webp"
-            alt="NerdResolve"
+            src={brand.logo}
+            alt={brand.logoAlt}
             className={styles.logo}
           />
         </Link>
-        <div className={styles.divider} />
-        <Link href="/" className={styles.portalName}>Portal do TI</Link>
+        {brand.organization && (
+          <>
+            <div className={styles.divider} />
+            <span className={styles.portalName}>{brand.organization}</span>
+          </>
+        )}
       </div>
 
       {user && (
@@ -39,7 +44,7 @@ export default function Header({ user }) {
             onClick={handleLogout}
             type="button"
           >
-            Sair
+            Sign out
           </button>
         </div>
       )}

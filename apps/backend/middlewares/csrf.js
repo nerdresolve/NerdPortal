@@ -11,10 +11,16 @@ function generateToken() {
 function csrfProtection(req, res, next) {
   if (!req.cookies[CSRF_COOKIE]) {
     const token = generateToken();
+    // "strict" would stop the browser sending this cookie when the frontend
+    // is served from a different origin than the API (the default Docker
+    // layout: :3000 and :4000). "lax" keeps CSRF protection — the token still
+    // has to be echoed back in the X-CSRF-Token header, which a cross-site
+    // attacker cannot read — while letting the real frontend work.
+    const crossSite = String(process.env.COOKIE_SAMESITE || "lax").toLowerCase();
     res.cookie(CSRF_COOKIE, token, {
       httpOnly: false,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
+      sameSite: crossSite,
+      secure: crossSite === "none" || process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 3600000,
     });
