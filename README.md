@@ -217,6 +217,7 @@ code, and `.env` is gitignored.
 | `SQLITE_DB_PATH` | — | Ignored under Docker (always `/data/nerdportal.db`) |
 | `BCRYPT_ROUNDS` | — | Password hashing cost. Default `12` |
 | `COOKIE_SAMESITE` | — | `lax` (default), or `none` for unrelated domains over HTTPS |
+| `COOKIE_SECURE` | — | `false` (default). Set `true` once you are behind HTTPS |
 | `ALLOWED_ORIGINS` | — | Extra CORS origins, comma separated |
 | `FRONTEND_URL` | — | Used to build the link in reset emails |
 | `NEXT_PUBLIC_API_URL` | — | API URL the **browser** calls |
@@ -274,11 +275,14 @@ What is actually implemented, so you can judge it rather than trust a badge:
   frontend too.
 - **Audit log** — every mutation records actor, action, target and IP.
 
+**Set `COOKIE_SECURE=true` in production.** It ships `false` so a first run
+over plain HTTP can actually sign in — a `Secure` cookie is silently dropped
+without TLS, which looks exactly like a wrong password. Once you have HTTPS in
+front, turn it on; until then session cookies cross the network in the clear.
+
 **What it does not do.** There is no SSO or LDAP integration; accounts are
 local. There is no per-record permission model — a role is `admin`, `editor` or
-`viewer`, and that is the whole matrix. Serve it behind HTTPS: `secure` cookies
-switch on with `NODE_ENV=production`, and without TLS in front, session cookies
-cross the network in the clear.
+`viewer`, and that is the whole matrix.
 
 ---
 

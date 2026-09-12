@@ -70,7 +70,10 @@ class SQLiteSessionStore extends Store {
 }
 
 function sessionMiddleware() {
-  const sameSite = String(process.env.COOKIE_SAMESITE || "lax").toLowerCase();
+  // Shared with the CSRF cookie so the two never disagree: a session cookie
+  // the browser keeps and a CSRF cookie it drops (or vice versa) is the
+  // hardest kind of login failure to diagnose.
+  const { cookieSameSite, cookieSecure } = require("./csrf");
 
   return session({
     store: new SQLiteSessionStore(),
@@ -81,12 +84,8 @@ function sessionMiddleware() {
     rolling: true,
     cookie: {
       httpOnly: true,
-      // See middlewares/csrf.js: the frontend and the API are separate origins
-      // in the default deployment, so "strict" would drop the session cookie
-      // on every API call. Set COOKIE_SAMESITE=none (with HTTPS) if you serve
-      // them from unrelated domains.
-      secure: sameSite === "none" || process.env.NODE_ENV === "production",
-      sameSite,
+      secure: cookieSecure(),
+      sameSite: cookieSameSite(),
       maxAge: 8 * 60 * 60 * 1000, // 8 hours
       path: "/",
     },
