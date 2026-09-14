@@ -2,7 +2,7 @@
 
 <img src="docs/brand/banner.svg" alt="NerdPortal: the IT department's front door, not another ticket queue" width="100%">
 
-The intranet the IT department never gets around to building: systems,
+The intranet the IT department never gets around to building. Systems,
 documents, announcements and metrics on one page, readable by everyone without
 a login.
 
@@ -18,13 +18,13 @@ a login.
 
 Every IT department ends up answering the same four questions over and over.
 *Which system do I use for that? Where is the VPN document? Is the printer down
-again? Who do I email about access?* The answers exist — scattered across chat
+again? Who do I email about access?* The answers exist, scattered across chat
 threads, a wiki nobody updates and one person's memory.
 
 NerdPortal puts them on one page. Anyone in the company can read it without an
 account: the system catalogue with live status, the document repository, the
-announcements and the team directory. Only writing requires a login, so the
-portal stays current without becoming a second job.
+announcements and the team directory. Only writing needs a login, so keeping it
+current doesn't turn into a second job.
 
 <div align="center">
 <img src="docs/screenshots/home.webp" alt="The NerdPortal home page" width="88%">
@@ -49,14 +49,14 @@ portal stays current without becoming a second job.
 </tr>
 </table>
 
-> These aren't mockups. It's the application running against a seeded database,
-> photographed with a headless browser.
+> These aren't mockups. It's the app running against a seeded database,
+> captured with a headless browser.
 
 ---
 
 ## How it works
 
-The whole product is one idea: **public read, restricted write**.
+The whole thing runs on one rule: **public read, restricted write**.
 
 ```
 GET  /api/v1/systems        no session        anyone can read
@@ -74,32 +74,31 @@ POST/PUT/DELETE             session + role    only an admin can write
 [4] audit log               who, what, when, from which IP
 ```
 
-### Three decisions worth recording
+### Three decisions worth explaining
 
-**Reading needs no account.** The alternative — putting the whole intranet
-behind a login — is what kills these portals: people stop checking it because
-the friction beats the benefit. Here the content is public to the network and
-only mutation is gated, so the reason to visit survives.
+**Reading needs no account.** Put the whole intranet behind a login and people
+stop checking it, because the friction costs more than the answer is worth.
+Here the content is open to the network and only writes are gated.
 
 **SQLite, not Postgres.** An IT portal for one company is a handful of tables
 read by a few hundred people. A database server would be one more thing to back
-up, patch and monitor for no measurable gain. The whole database is a file on a
-Docker volume; backing it up is `cp`.
+up, patch and monitor, with nothing to show for it. The whole database is a
+file on a Docker volume, so backing it up is `cp`.
 
 **The CSRF cookie is `SameSite=Lax`, deliberately.** The frontend (`:3000`) and
-the API (`:4000`) are different origins in the default layout, and `Strict`
-would stop the browser from ever sending the cookie back — login would fail
-with a 403 that looks like a wrong password. Protection comes from the
-double-submit itself: an attacker's page cannot *read* the cookie to echo it in
-the header. Set `COOKIE_SAMESITE=none` (HTTPS only) if you split the two across
-unrelated domains.
+the API (`:4000`) are different origins in the default layout. With `Strict`
+the browser never sends the cookie back, and login fails with a 403 that looks
+exactly like a wrong password. The protection is the double submit itself: an
+attacker's page cannot *read* the cookie to echo it in the header. Set
+`COOKIE_SAMESITE=none` (HTTPS only) if you split the two across unrelated
+domains.
 
 ---
 
 ## Run it
 
-You need **Docker**. Nothing else — Node, the database and the build all live
-in the containers.
+You need **Docker** and nothing else. Node, the database and the build all
+live in the containers.
 
 ```bash
 git clone https://github.com/nerdresolve/NerdPortal.git
@@ -113,7 +112,7 @@ them:
 ```bash
 # a random string, 64+ characters
 SESSION_SECRET=$(openssl rand -hex 32)
-# the first admin's password — there is no built-in default
+# the first admin's password. There is no built-in default
 ADMIN_SEED_PASSWORD=choose-something-long
 ```
 
@@ -144,9 +143,9 @@ cd apps/backend  && npm install && npm run migrate && npm run dev
 cd apps/frontend && npm install && npm run dev
 ```
 
-`better-sqlite3` compiles a native module, so this path needs a C++ toolchain
-(`build-essential` on Debian, Xcode CLT on macOS, Visual Studio Build Tools on
-Windows). If that sounds like a bad afternoon, use Docker.
+`better-sqlite3` compiles a native module, so this path needs a C++ toolchain:
+`build-essential` on Debian, Xcode CLT on macOS, Visual Studio Build Tools on
+Windows. Use Docker if you would rather not set that up.
 
 ### Tests
 
@@ -161,7 +160,7 @@ path traversal, XSS sanitizing and the full password-reset flow.
 
 ## Make it yours
 
-The portal should wear your face, not NerdResolve's. **One file does it:**
+The portal should carry your branding, not NerdResolve's. **One file does it:**
 [`apps/frontend/brand.config.js`](apps/frontend/brand.config.js).
 
 ```js
@@ -185,9 +184,9 @@ const brand = {
 };
 ```
 
-Every color becomes a CSS custom property at render time, so changing `primary`
-repaints buttons, links, headings, focus rings, badges, the active sidebar item
-and the login panel together. There is no stylesheet to hunt through.
+Every color becomes a CSS custom property at render time. Change `primary` and
+the buttons, links, headings, focus rings, badges, active sidebar item and login
+panel all follow. No stylesheet to hunt through.
 
 | To change | Do this |
 |---|---|
@@ -198,8 +197,8 @@ and the login panel together. There is no stylesheet to hunt through.
 | Typeface | `fonts.primary`, plus the `<link>` in `pages/_document.js` if it is a webfont |
 | Support contact on the Support page | the `support` block |
 
-The values shipped in the file are NerdResolve's own identity — that is the
-"vanilla" look in the screenshots above.
+The values shipped in the file are NerdResolve's own identity, which is the
+stock look in the screenshots above.
 
 ---
 
@@ -212,19 +211,19 @@ code, and `.env` is gitignored.
 |---|---|---|
 | `SESSION_SECRET` | yes | Session signing key, 64+ random characters |
 | `ADMIN_SEED_PASSWORD` | yes | First admin's password. Empty = the seed refuses to run |
-| `ADMIN_SEED_EMAIL` | — | Defaults to `admin@example.com` |
-| `ADMIN_SEED_NAME` | — | Defaults to `IT Administrator` |
-| `SQLITE_DB_PATH` | — | Ignored under Docker (always `/data/nerdportal.db`) |
-| `BCRYPT_ROUNDS` | — | Password hashing cost. Default `12` |
-| `COOKIE_SAMESITE` | — | `lax` (default), or `none` for unrelated domains over HTTPS |
-| `COOKIE_SECURE` | — | `false` (default). Set `true` once you are behind HTTPS |
-| `ALLOWED_ORIGINS` | — | Extra CORS origins, comma separated |
-| `FRONTEND_URL` | — | Used to build the link in reset emails |
-| `NEXT_PUBLIC_API_URL` | — | API URL the **browser** calls |
-| `INTERNAL_API_URL` | — | API URL the Next.js server calls during SSR |
+| `ADMIN_SEED_EMAIL` | no | Defaults to `admin@example.com` |
+| `ADMIN_SEED_NAME` | no | Defaults to `IT Administrator` |
+| `SQLITE_DB_PATH` | no | Ignored under Docker (always `/data/nerdportal.db`) |
+| `BCRYPT_ROUNDS` | no | Password hashing cost. Default `12` |
+| `COOKIE_SAMESITE` | no | `lax` (default), or `none` for unrelated domains over HTTPS |
+| `COOKIE_SECURE` | no | `false` (default). Set `true` once you are behind HTTPS |
+| `ALLOWED_ORIGINS` | no | Extra CORS origins, comma separated |
+| `FRONTEND_URL` | no | Used to build the link in reset emails |
+| `NEXT_PUBLIC_API_URL` | no | API URL the **browser** calls |
+| `INTERNAL_API_URL` | no | API URL the Next.js server calls during SSR |
 | `SMTP_HOST` `SMTP_PORT` `SMTP_USER` `SMTP_PASSWORD` `SMTP_FROM_EMAIL` | for reset | Password recovery stays disabled until these are set |
-| `PASSWORD_RESET_CODE_TTL_MINUTES` | — | Code lifetime. Default `15` |
-| `PASSWORD_RESET_MAX_ATTEMPTS` | — | Wrong codes before lockout. Default `5` |
+| `PASSWORD_RESET_CODE_TTL_MINUTES` | no | Code lifetime. Default `15` |
+| `PASSWORD_RESET_MAX_ATTEMPTS` | no | Wrong codes before lockout. Default `5` |
 
 ---
 
@@ -250,48 +249,49 @@ database/
   seeds/                the first admin, and nothing else
 ```
 
-The `dal/` boundary is what keeps SQL out of the controllers: every query is a
-prepared statement with bound parameters, so a route handler has no way to
-build a string that reaches the database.
+The `dal/` boundary keeps SQL out of the controllers. Every query is a prepared
+statement with bound parameters, so a route handler has no way to build a
+string that reaches the database.
 
 ---
 
 ## Security
 
-What is actually implemented, so you can judge it rather than trust a badge:
+What is actually implemented, so you can judge it instead of trusting a badge:
 
-- **Passwords** — bcrypt, cost 12, never logged. Minimum 12 characters with
+- **Passwords.** bcrypt, cost 12, never logged. Minimum 12 characters with
   upper, lower and a digit, enforced server-side.
-- **Sessions** — httpOnly cookie, 8-hour rolling expiry, stored in SQLite
-  (survives a restart; revocable by deleting a row).
-- **CSRF** — double-submit token on every non-GET request.
-- **Rate limiting** — per-IP on login and on each password-reset step.
-- **Uploads** — extension and MIME allowlist, size cap, filenames sanitized,
-  and every resolved path checked to be inside the uploads directory before a
+- **Sessions.** httpOnly cookie, 8-hour rolling expiry, stored in SQLite. It
+  survives a restart, and deleting a row revokes it.
+- **CSRF.** Double-submit token on every non-GET request.
+- **Rate limiting.** Per-IP on login and on each password-reset step.
+- **Uploads.** Extension and MIME allowlist, size cap, filenames sanitized, and
+  every resolved path checked to be inside the uploads directory before a
   write. Path traversal is covered by tests.
-- **XSS** — request bodies sanitized on the way in; credential fields are
-  exempted deliberately (they are compared as opaque values, never rendered).
-- **Headers** — helmet, with `X-Frame-Options: DENY` and `nosniff` on the
+- **XSS.** Request bodies are sanitized on the way in. Credential fields are
+  exempt on purpose, since they are compared as opaque values and never
+  rendered.
+- **Headers.** helmet, with `X-Frame-Options: DENY` and `nosniff` on the
   frontend too.
-- **Audit log** — every mutation records actor, action, target and IP.
+- **Audit log.** Every mutation records actor, action, target and IP.
 
-**Set `COOKIE_SECURE=true` in production.** It ships `false` so a first run
-over plain HTTP can actually sign in — a `Secure` cookie is silently dropped
-without TLS, which looks exactly like a wrong password. Once you have HTTPS in
-front, turn it on; until then session cookies cross the network in the clear.
+**Set `COOKIE_SECURE=true` in production.** It ships `false` so that a first
+run over plain HTTP can sign in at all. Without TLS a `Secure` cookie is
+dropped silently, which looks exactly like a wrong password. Turn it on once
+HTTPS is in front. Until then, session cookies cross the network in the clear.
 
-**What it does not do.** There is no SSO or LDAP integration; accounts are
-local. There is no per-record permission model — a role is `admin`, `editor` or
-`viewer`, and that is the whole matrix.
+**What it does not do.** There is no SSO or LDAP integration, so accounts are
+local. There is no per-record permission model either: a role is `admin`,
+`editor` or `viewer`, and that is the whole matrix.
 
 ---
 
 ## Known limitations
 
 - **SQLite means one writer.** Fine for a few hundred readers and a handful of
-  editors; not a choice for a portal serving tens of thousands.
+  editors. Not the right call for a portal serving tens of thousands.
 - **Uploads live on a Docker volume**, not object storage. Back up the volume.
-- **The UI ships in English only.** Strings are inline in the components —
+- **The UI ships in English only.** Strings are inline in the components, so
   there is no i18n layer yet.
 - **Dates are formatted `en-US`** and rendered from date-only values, so a
   period can read one day off in timezones far from UTC.
@@ -300,6 +300,6 @@ local. There is no per-record permission model — a role is `admin`, `editor` o
 
 ## License
 
-MIT. Use it, fork it, sell it, rebrand it — see [LICENSE](LICENSE).
+MIT. Use it, fork it, sell it, rebrand it. See [LICENSE](LICENSE).
 
 Built by [NerdResolve](https://github.com/nerdresolve).
